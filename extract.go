@@ -15,7 +15,10 @@ func validAnchorElement(n *html.Node) bool {
 
 // validTextNode returns true if the node is a valid text node
 func validTextNode(n *html.Node) bool {
-	return n.Type == html.TextNode
+	cleanedData := strings.TrimFunc(n.Data, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+	})
+	return n.Type == html.TextNode && len(cleanedData) > 1
 }
 
 // getWords takes in an HTMl text node and returns a slice of strings containing each word in its data.
@@ -46,23 +49,30 @@ func getHref(n *html.Node) (string, bool) {
 	return "", false
 }
 
+// invalidNode returns true if the node is a style or script element
+func invalidNode(n *html.Node) bool {
+	return n.Type == html.ElementNode && (n.Data == "script" || n.Data == "style")
+}
+
 // sanitizeHTML takes in an HTML node and removes any script or style content from the tree
 func sanitizeHTML(n *html.Node) {
 	if n == nil {
 		return
 	}
 
-	// If the element is a script or style node then remove it
-	if n.Type == html.ElementNode && (n.Data == "script" || n.Data == "style") {
-		if n.Parent != nil {
-			n.Parent.RemoveChild(n)
-		}
-		return
-	}
-
+	var toRemove []*html.Node
 	// Repeat the process for all the sibling nodes
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		sanitizeHTML(c)
+		if invalidNode(c) {
+			toRemove = append(toRemove, c)
+		} else {
+			sanitizeHTML(c)
+		}
+	}
+	for _, node := range toRemove {
+		if node.Parent != nil {
+			node.Parent.RemoveChild(node)
+		}
 	}
 }
 

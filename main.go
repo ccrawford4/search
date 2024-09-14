@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	countMap := search("https://cs272-f24.github.io/tests/rnj/sceneI_30.0.html", "Verona")

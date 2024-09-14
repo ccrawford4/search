@@ -103,6 +103,14 @@ func TestExtract(t *testing.T) {
 			</html>
 		`),
 		nil,
+		[]byte(`<!DOCTYPE html>
+			<html>
+				<style></style>
+				<style>body {
+					margin-right: 15%;
+				}
+				</style>
+			</html>`),
 	}
 	expectedWords := [][]string{
 		{
@@ -193,6 +201,7 @@ func TestExtract(t *testing.T) {
 			"text",
 		},
 		nil,
+		nil,
 	}
 
 	expectedHrefs := [][]string{
@@ -223,6 +232,7 @@ func TestExtract(t *testing.T) {
 		},
 		nil,
 		nil,
+		nil,
 	}
 	names := []string{
 		"simple",
@@ -233,6 +243,7 @@ func TestExtract(t *testing.T) {
 		"style",
 		"script",
 		"nil",
+		"sibling style nodes",
 	}
 	var tests []struct {
 		text                         []byte
