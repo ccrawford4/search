@@ -1,0 +1,20 @@
+<html lang="en">
+    <h2> Your Search Results for the term {{.TERM}}</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>URL</th>
+            <th>TFIDF</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range .HITS }}
+            <tr>
+                <td><a href="{{.URL}}">{{.URL}}</a></td>
+                <td>{{.TFIDF}}</td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+    <a href="/">Back</a>
+</html>
