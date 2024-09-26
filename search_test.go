@@ -1,49 +1,49 @@
 package main
 
 import (
+	"github.com/go-test/deep"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 )
 
 func TestSearch(t *testing.T) {
 	tests := []struct {
 		name, path    string
-		pathFrequency frequency
+		pathFrequency Frequency[float64]
 	}{
 		{
 			"Verona",
 			"/tests/rnj/sceneI_30.0.html",
-			frequency{
-				"/tests/rnj/sceneI_30.0.html": 1,
+			Frequency[float64]{
+				"/tests/rnj/sceneI_30.0.html": -0.00316873679646296,
 			},
 		},
 		{
 			"Benvolio",
 			"/tests/rnj/sceneI_30.1.html",
-			frequency{
-				"/tests/rnj/sceneI_30.1.html": 26,
+			Frequency[float64]{
+				"/tests/rnj/sceneI_30.1.html": -0.011392692703440337,
 			},
 		},
 		{
 			"Romeo",
 			"/tests/rnj/",
-			frequency{
-				"/tests/rnj/sceneI_30.0.html":  2,
-				"/tests/rnj/sceneI_30.1.html":  22,
-				"/tests/rnj/sceneI_30.3.html":  2,
-				"/tests/rnj/sceneI_30.4.html":  17,
-				"/tests/rnj/sceneI_30.5.html":  15,
-				"/tests/rnj/sceneII_30.2.html": 42,
-				"/tests/rnj/":                  200,
-				"/tests/rnj/sceneI_30.2.html":  15,
-				"/tests/rnj/sceneII_30.0.html": 3,
-				"/tests/rnj/sceneII_30.1.html": 10,
-				"/tests/rnj/sceneII_30.3.html": 13,
+			Frequency[float64]{
+				"/tests/rnj/sceneI_30.0.html":  -0.0007955486503031538,
+				"/tests/rnj/sceneI_30.1.html":  -0.0012101140313927157,
+				"/tests/rnj/sceneI_30.3.html":  -0.00019478639633711237,
+				"/tests/rnj/sceneI_30.4.html":  -0.0013581512370397391,
+				"/tests/rnj/sceneI_30.5.html":  -0.0011544366870488737,
+				"/tests/rnj/sceneII_30.2.html": -0.002859674878116742,
+				"/tests/rnj/":                  -0.0024192420543789886,
+				"/tests/rnj/sceneI_30.2.html":  -0.0014065221174714565,
+				"/tests/rnj/sceneII_30.0.html": -0.0012060179007255256,
+				"/tests/rnj/sceneII_30.1.html": -0.001749470411546287,
+				"/tests/rnj/sceneII_30.3.html": -0.0012312062445167854,
 			},
 		},
 	}
@@ -71,15 +71,19 @@ func TestSearch(t *testing.T) {
 
 			hostURL := parseURL(ts.URL)
 			testURL := clean(hostURL, test.path)
-			got := search(testURL, test.name)
 
-			expected := make(frequency)
+			index := make(Index)
+			stopWords := getStopWords()
+			crawl(&index, parseURL(testURL), stopWords)
+			got, _ := search(&index, test.name, stopWords)
+
+			expected := make(Frequency[float64])
 			for path, freq := range test.pathFrequency {
 				expected[clean(hostURL, path)] += freq
 			}
 
-			if !reflect.DeepEqual(got, expected) {
-				t.Errorf("got %v\n, want %v\n", got, expected)
+			if diff := deep.Equal(got, expected); diff != nil {
+				t.Error(diff)
 			}
 		})
 	}

@@ -25,6 +25,7 @@ func TestCrawl(t *testing.T) {
 		name                         string
 		expectedHrefs, expectedWords []string
 		serverContent                map[string][]byte
+		numDocs                      float64
 	}{
 		{
 			"simple",
@@ -33,6 +34,7 @@ func TestCrawl(t *testing.T) {
 			map[string][]byte{
 				"/": simpleDoc,
 			},
+			1,
 		},
 		{
 			"href",
@@ -45,6 +47,7 @@ func TestCrawl(t *testing.T) {
 				"/":                            hrefDoc,
 				"/tests/project01/simple.html": simpleDoc,
 			},
+			2,
 		},
 		{
 			"style",
@@ -59,6 +62,7 @@ func TestCrawl(t *testing.T) {
 				"/tests/project01/href.html":   hrefDoc,
 				"/tests/project01/simple.html": simpleDoc,
 			},
+			3,
 		},
 		{
 			"repeat-href",
@@ -72,6 +76,7 @@ func TestCrawl(t *testing.T) {
 				"/":           repeatDoc,
 				"repeat-href": repeatDoc,
 			},
+			2,
 		},
 		{
 			"outside-domain",
@@ -82,6 +87,7 @@ func TestCrawl(t *testing.T) {
 			map[string][]byte{
 				"/": []byte("<html><body><a href=\"https://wikipedia.org\"></a></body></html>"),
 			},
+			1,
 		},
 	}
 
@@ -96,17 +102,24 @@ func TestCrawl(t *testing.T) {
 			fmt.Printf("ts: %v\n", ts.URL)
 			defer ts.Close()
 
-			resultIndex := crawl(parseURL(ts.URL))
-			expectedIndex := make(index)
+			expectedIndex := make(Index)
+			index := make(Index)
+			stopWords := getStopWords()
+			svrURL := parseURL(ts.URL)
 
+			crawl(&index, svrURL, stopWords)
+			wordsInDoc := make(Frequency[int])
 			for path, doc := range test.serverContent {
-				fullURL := clean(parseURL(ts.URL), path)
+				fullURL := clean(svrURL, path)
 				words, _ := extract(doc)
-				populateIndex(expectedIndex, words, fullURL)
+				wordFreq := createWordFrequency(words, stopWords)
+				wordsInDoc[fullURL] = len(wordFreq)
+				populateIndexValues(&expectedIndex, fullURL, &wordFreq)
 			}
+			populateTFIDFValues(&expectedIndex, test.numDocs, wordsInDoc)
 
-			if !reflect.DeepEqual(expectedIndex, resultIndex) {
-				t.Errorf("expected: %v\n, got: %v\n", expectedIndex, resultIndex)
+			if !reflect.DeepEqual(index, expectedIndex) {
+				t.Errorf("expected: %v\n, got: %v\n", expectedIndex, index)
 			}
 		})
 	}
