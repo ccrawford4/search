@@ -15,11 +15,11 @@ export default function SearchInput(props: SearchInputProps) {
             disablePortal
             options={emptyParams}
             sx={{ width: 300 }}
+            onSelect={(event) => props.setSearchTerm((event.target as HTMLSelectElement).value)}
             renderInput={(params: any) =>
                 <TextField
                     {...params}
                     label="Search Term"
-                    onChange={(event) => props.setSearchTerm(event.target.value)}
                 />
             }
         />
