@@ -1,18 +1,36 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
+)
 
 func main() {
 	index := make(Index)
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},  // Allow requests from this origin
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"}, // Allow these methods
+		AllowHeaders:     []string{"Content-Type"},           // Allow these headers
+		AllowCredentials: true,                               // Allow cookies or other credentials
+	}))
+
 	stopWords := getStopWords()
-	router.GET("/search", func(c *gin.Context) {
-		term, found := c.Params.Get("term")
-		if !found {
-			c.JSON(400, gin.H{})
+	router.POST("/search", func(c *gin.Context) {
+		type SearchRequestBody struct {
+			SearchTerm string
 		}
+
+		var searchRequestBody SearchRequestBody
+		if err := c.BindJSON(&searchRequestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
 		// get the searchTerm from the Request and then search the index for the term
-		searchTerm := getStemmedWord(term, stopWords)
+		searchTerm := getStemmedWord(searchRequestBody.SearchTerm, stopWords)
 		freq, found := search(&index, searchTerm, stopWords)
 
 		// If no search term was found then serve the no_results document
@@ -29,4 +47,8 @@ func main() {
 	})
 	go router.Run(":8080")
 	crawl(&index, parseURL("https://cs272-f24.github.io/top10/"), stopWords)
+
+	for {
+		time.Sleep(1000 * time.Millisecond)
+	}
 }
