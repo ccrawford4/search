@@ -1,39 +1,34 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import './App.css';
 import Search from "./components/search/Search"
-import { getResults } from "./api/search";
+import ResultTable from "./components/ResultTable";
+
+export interface HIT {
+    TFIDF: number
+    URL: string
+}
 
 function App() {
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [results, setResults] = React.useState<any[]>([]);
-
-    useEffect(() => {
-        console.log("Search Term: ", searchTerm);
-        getResults(searchTerm).then((response: any) => {
-            console.log("Response: ", response);
-            setResults(response);
-        });
-
-    }, [searchTerm]);
+    const [results, setResults] = React.useState<HIT[]>([]);
 
 
     return (
       <html lang="english">
-        <body>
+      <body>
           <h1>Welcome to my search engine!</h1>
-            <h2>Search for a term</h2>
-                <Search
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                />
+          <h2>Search for a term</h2>
+          <Search
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setResults={setResults}
+          />
           {results.length > 0 && (
-              <div>
-                  {results.map((item: any) => (item))}
-              </div>
+              <ResultTable hits={results}/>
           )}
-          </body>
+      </body>
       </html>
-  );
+    );
 }
 
 export default App;

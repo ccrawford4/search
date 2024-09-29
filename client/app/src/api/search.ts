@@ -1,5 +1,6 @@
 export async function getResults(searchTerm: string) {
     try {
+        console.log("Search term: ", searchTerm);
         const response = await fetch("http://localhost:8080/search", {
             method: "POST",
             headers: {
@@ -13,7 +14,6 @@ export async function getResults(searchTerm: string) {
             console.log("Error: ", response.statusText);
         }
 
-        console.log("Response: ", response);
         return await response.json();
     } catch (error) {
         console.log("Fetch error: ", error);
