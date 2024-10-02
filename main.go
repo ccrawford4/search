@@ -4,11 +4,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"time"
 )
 
 func main() {
 	index := make(Index)
+	urlWordTotals := make(Frequency)
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
@@ -40,15 +40,14 @@ func main() {
 		}
 
 		// Convert the Frequency found into templateData to be embedded into the html
-		templateData := getTemplateData(freq, searchTerm)
+		templateData := getTemplateData(freq, searchTerm, (float64)(len(index)), &urlWordTotals)
 		// fileContent, _ := openAndReadFile("./static/search.html")
 		// executeTemplate(*w, string(fileContent), templateData)
 		c.IndentedJSON(200, templateData)
 	})
-	go router.Run(":8080")
-	crawl(&index, parseURL("https://cs272-f24.github.io/top10/"), stopWords)
-
-	for {
-		time.Sleep(1000 * time.Millisecond)
+	go crawl(&index, &urlWordTotals, parseURL("https://cs272-f24.github.io/top10/"), stopWords)
+	err := router.Run(":8080")
+	if err != nil {
+		return
 	}
 }

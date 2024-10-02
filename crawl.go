@@ -24,22 +24,21 @@ func validURL(visited *hashset.Set, newURL, host string) bool {
 	return true
 }
 
-func populateIndexValues(index *Index, URL string, frequency *Frequency[int]) {
+func populateIndexValues(index *Index, URL string, frequency *Frequency) {
 	for word, value := range *frequency {
 		_, found := (*index)[word]
 		if !found {
-			(*index)[word] = make(Frequency[float64])
+			(*index)[word] = make(Frequency)
 		}
-		(*index)[word][URL] = (float64)(value)
+		(*index)[word][URL] = value
 	}
 }
 
 // crawl takes in a pointer
-func crawl(index *Index, hostURL *url.URL, stopWords *hashset.Set) {
+func crawl(index *Index, wordsInDoc *Frequency, hostURL *url.URL, stopWords *hashset.Set) {
 	initialFullPath := clean(hostURL, hostURL.Path)
-	queue := []string{hostURL.Path}    // Queue for keeping track of hrefs to visit
-	visited := hashset.New()           // Visited hashset to keep track of URLs crawled
-	wordsInDoc := make(Frequency[int]) // keep track of the number of words for each document
+	queue := []string{hostURL.Path} // Queue for keeping track of hrefs to visit
+	visited := hashset.New()        // Visited hashset to keep track of URLs crawled
 
 	for len(queue) > 0 {
 		// Pop the last href off the queue
@@ -60,10 +59,9 @@ func crawl(index *Index, hostURL *url.URL, stopWords *hashset.Set) {
 
 		// Populate the index and queue with the relevant data from the document
 		words, hrefs := extract(body)
+		(*wordsInDoc)[cleanedURL] += len(words)
 		wordFrequency := createWordFrequency(words, stopWords)
-		wordsInDoc[cleanedURL] += len(wordFrequency) // Total # of words
 		populateIndexValues(index, cleanedURL, &wordFrequency)
 		queue = append(queue, hrefs...)
 	}
-	populateTFIDFValues(index, (float64)(visited.Size()), wordsInDoc)
 }

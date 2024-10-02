@@ -30,7 +30,7 @@ func getParam(r *http.Request, key string) string {
 
 // initSearchHandler creates the http handler and
 // handles logic for serving the data on /search requests
-func initSearchHandler(index *Index, w *http.ResponseWriter, r *http.Request, stopWords *hashset.Set) {
+func initSearchHandler(index *Index, urlWordTotals *Frequency, w *http.ResponseWriter, r *http.Request, stopWords *hashset.Set) {
 	// get the searchTerm from the Request and then search the index for the term
 	searchTerm := getStemmedWord(getParam(r, "term"), stopWords)
 	freq, found := search(index, searchTerm, stopWords)
@@ -42,7 +42,7 @@ func initSearchHandler(index *Index, w *http.ResponseWriter, r *http.Request, st
 	}
 
 	// Convert the Frequency found into templateData to be embedded into the html
-	templateData := getTemplateData(freq, searchTerm)
+	templateData := getTemplateData(freq, searchTerm, (float64)(len(*index)), urlWordTotals)
 	fileContent, _ := openAndReadFile("./static/search.html")
 	executeTemplate(*w, string(fileContent), templateData)
 }
@@ -60,11 +60,11 @@ func executeTemplate(w http.ResponseWriter, fileContent string, templateData *Te
 }
 
 // initHandlers creates all the http handlers for the web server
-func initHandlers(index *Index, stopWords *hashset.Set) {
+func initHandlers(index *Index, urlWordTotals *Frequency, stopWords *hashset.Set) {
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	http.Handle("/no_results", http.FileServer(http.Dir("static")))
 	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
-		initSearchHandler(index, &w, r, stopWords)
+		initSearchHandler(index, urlWordTotals, &w, r, stopWords)
 	})
 	http.HandleFunc("/documents/top11/", func(w http.ResponseWriter, r *http.Request) {
 		corpusHandler(&w, r)

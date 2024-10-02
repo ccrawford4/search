@@ -22,7 +22,7 @@ func getStemmedWord(word string, stopWords *hashset.Set) string {
 
 // search takes in an index and a search term and returns the
 // Frequency result and a bool indicating whether the term was found or not
-func search(index *Index, searchTerm string, stopWords *hashset.Set) (Frequency[float64], bool) {
+func search(index *Index, searchTerm string, stopWords *hashset.Set) (Frequency, bool) {
 	// If the search term is not a stop word then get the stemmed version of the word
 	searchTerm = getStemmedWord(searchTerm, stopWords)
 	freq, found := (*index)[searchTerm]

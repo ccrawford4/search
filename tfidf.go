@@ -8,8 +8,8 @@ import (
 
 // createWordFrequency creates a Frequency map
 // with words as the keys, and their counts as values
-func createWordFrequency(words []string, stopWords *hashset.Set) Frequency[int] {
-	freq := make(Frequency[int])
+func createWordFrequency(words []string, stopWords *hashset.Set) Frequency {
+	freq := make(Frequency)
 	for _, word := range words {
 		stemmedWord := getStemmedWord(word, stopWords)
 		freq[stemmedWord] += 1
@@ -17,8 +17,7 @@ func createWordFrequency(words []string, stopWords *hashset.Set) Frequency[int] 
 	return freq
 }
 
-func calculateIDF(index *Index, numDocs float64, word string) float64 {
-	docsContainingWord := (float64)(len((*index)[word]))
+func calculateIDF(docsContainingWord float64, numDocs float64) float64 {
 	return math.Log10(numDocs / (docsContainingWord + 1))
 }
 
@@ -28,25 +27,33 @@ func calculateTF(termCount, totalWords float64) float64 {
 	return termCount / totalWords
 }
 
-func populateTFIDFValues(index *Index, numDocs float64, wordsInDoc Frequency[int]) {
-	for word, frequency := range *index {
-		idf := calculateIDF(index, numDocs, word)
-		for URL, termCount := range frequency {
-			totalWords := wordsInDoc[URL]
-			// Compute the TF-IDF by multiplying the TF * IDF
-			tf := calculateTF(termCount, (float64)(totalWords))
-			(*index)[word][URL] = tf * idf
-		}
-	}
+// calculateTFIDF calculates the TFIDF score
+func calculateTFIDF(termCount, totalWords, docsContainingWord, numDocs float64) float64 {
+	return calculateTF(termCount, totalWords) * calculateIDF(docsContainingWord, numDocs)
 }
+
+//func populateTFIDFValues(index *Index, numDocs float64, wordsInDoc Frequency) {
+//	for word, frequency := range *index {
+//		idf := calculateIDF(index, numDocs, word)
+//		for URL, termCount := range frequency {
+//			totalWords := wordsInDoc[URL]
+//			// Compute the TF-IDF by multiplying the TF * IDF
+//			tf := calculateTF((float64)(termCount), (float64)(totalWords))
+//			(*index)[word][URL] = tf * idf
+//		}
+//	}
+//}
 
 // getTemplateData takes in a Frequency object and
 // a searchTerm and returns the formated TemplateData response
-func getTemplateData(freq Frequency[float64], searchTerm string) *TemplateData {
+func getTemplateData(freq Frequency, searchTerm string, numDocs float64, urlWordTotals *Frequency) *TemplateData {
 	// Iterate through the frequency map and populate the hits array
 	var hits Hits
-	for url, tf := range freq {
-		hits = append(hits, Hit{url, tf})
+	docsContainingWord := (float64)(len(freq))
+	for url, count := range freq {
+		totalWords := (float64)((*urlWordTotals)[url])
+		tfidf := calculateTFIDF((float64)(count), totalWords, docsContainingWord, numDocs)
+		hits = append(hits, Hit{url, tfidf})
 	}
 	// Sort the hits array based on TF-IDF score
 	sort.Sort(hits)

@@ -1,11 +1,10 @@
 package main
 
-// Frequency can be used to map URLs to TF-IDF scores or
-// to map words to their frequency counts
-type Frequency[V float64 | int] map[string]V
+// Frequency can be used to map URLs to word frequency counts
+type Frequency map[string]int
 
-// Index map[word][URL]TFIDF score
-type Index map[string]Frequency[float64]
+// Index map[word][URL]count
+type Index map[string]Frequency
 
 // Hit struct is used to format the template response
 // URL = the URL that a word is pulled from

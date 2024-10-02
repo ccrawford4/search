@@ -104,11 +104,11 @@ func TestCrawl(t *testing.T) {
 
 			expectedIndex := make(Index)
 			index := make(Index)
+			wordsInDoc := make(Frequency)
 			stopWords := getStopWords()
 			svrURL := parseURL(ts.URL)
 
-			crawl(&index, svrURL, stopWords)
-			wordsInDoc := make(Frequency[int])
+			crawl(&index, &wordsInDoc, svrURL, stopWords)
 			for path, doc := range test.serverContent {
 				fullURL := clean(svrURL, path)
 				words, _ := extract(doc)
@@ -116,7 +116,6 @@ func TestCrawl(t *testing.T) {
 				wordsInDoc[fullURL] = len(wordFreq)
 				populateIndexValues(&expectedIndex, fullURL, &wordFreq)
 			}
-			populateTFIDFValues(&expectedIndex, test.numDocs, wordsInDoc)
 
 			if !reflect.DeepEqual(index, expectedIndex) {
 				t.Errorf("expected: %v\n, got: %v\n", expectedIndex, index)
