@@ -12,10 +12,10 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},  // Allow requests from this origin
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"}, // Allow these methods
-		AllowHeaders:     []string{"Content-Type"},           // Allow these headers
-		AllowCredentials: true,                               // Allow cookies or other credentials
+		AllowOrigins:     []string{"http://localhost:3000", "https://calm-field-07a2a211e.5.azurestaticapps.net"}, // Allow requests from this origin
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},                                                      // Allow these methods
+		AllowHeaders:     []string{"Content-Type"},                                                                // Allow these headers
+		AllowCredentials: true,                                                                                    // Allow cookies or other credentials
 	}))
 
 	stopWords := getStopWords()
