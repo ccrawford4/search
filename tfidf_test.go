@@ -131,7 +131,7 @@ func TestTfIdf(t *testing.T) {
 	})
 
 	var dbIdx Index
-	dbIdx = newDBIndex("test.db", false)
+	dbIdx = newDBIndex("test.db", true)
 	url, err := parseURL("http://127.0.0.1:8080/documents/top11/")
 	if err != nil {
 		t.Fatalf("Error parsing URL: %v", err.Error())

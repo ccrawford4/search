@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"log"
 	"os"
@@ -19,12 +20,11 @@ type Url struct {
 }
 type WordFrequencyRecord struct {
 	gorm.Model
-	Count      int
-	WordID     uint
-	Word       Word
-	UrlID      uint
-	Url        Url
-	IdxWordUrl string `gorm:"uniqueIndex:idx_word_url"`
+	Count  int
+	WordID uint `gorm:"index:idx_word_url,unique"`
+	UrlID  uint `gorm:"index:idx_word_url,unique"`
+	Word   Word
+	Url    Url
 }
 
 // migrateTables migrates the Word, Url, and WordFrequencyRecord tables using autoMigrate
@@ -45,19 +45,31 @@ func dropDatabase(dbName string) {
 
 // connectToDB connects to a sqlite DB given its name, migrates the tables, and then
 // returns a pointer to the gorm.DB struct
-func connectToDB(dbName string, resetDB bool) *gorm.DB {
-	if resetDB {
-		dropDatabase(dbName)
+func connectToDB(connString string, useSqlite bool) (*gorm.DB, error) {
+	if useSqlite {
+		db, err := gorm.Open(sqlite.Open(connString), &gorm.Config{})
+		migrateTables(db)
+		return db, err
 	}
-	db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{
-		SkipDefaultTransaction: true,
-		PrepareStmt:            true,
-	})
+	db, err := gorm.Open(sqlserver.Open(connString), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatal("Error connecting to the database: ", err)
 	}
+
+	// Check the connection
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("Error getting SQL DB from GORM: ", err)
+	}
+
+	err = sqlDB.Ping()
+	if err != nil {
+		log.Fatal("Error pinging the database: ", err)
+	}
+
+	fmt.Println("Connected to the database using GORM!")
 	migrateTables(db)
-	return db
+	return db, err
 }
 
 // getItem takes in a pointer to a struct, and fills the

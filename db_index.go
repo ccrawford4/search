@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/kljensen/snowball"
 	"gorm.io/gorm"
@@ -90,7 +89,11 @@ func (idx *DBIndex) getTotalWords(url string) int {
 	return urlObj.Count
 }
 
-func newDBIndex(dbName string, db *gorm.DB) *DBIndex {
+func newDBIndex(connString string, useSqlite bool) *DBIndex {
+	db, err := connectToDB(connString, useSqlite)
+	if err != nil {
+		log.Fatalf("Error connecting to DB: %v\n", err)
+	}
 	return &DBIndex{StopWords: getStopWords(), db: db}
 }
 
@@ -158,19 +161,18 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	for term, frequency := range c.TermFrequency {
 		if word, found := wordMap[term]; found {
 			wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
-				Url:        url,
-				Word:       *word,
-				WordID:     word.ID,
-				UrlID:      url.ID,
-				Count:      frequency,
-				IdxWordUrl: fmt.Sprintf("%d%d", word.ID, url.ID),
+				Url:    url,
+				Word:   *word,
+				WordID: word.ID,
+				UrlID:  url.ID,
+				Count:  frequency,
 			})
 		}
 	}
 
 	result := idx.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "idx_word_url"}},
-		DoUpdates: clause.AssignmentColumns([]string{"count"}),
+		Columns:   []clause.Column{{Name: "word_id"}, {Name: "url_id"}}, // Use WordID and UrlID for uniqueness
+		DoUpdates: clause.AssignmentColumns([]string{"count"}),          // Update 'count' on conflict
 	}).Create(&wordFrequencyRecords)
 
 	if result.Error != nil {

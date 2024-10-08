@@ -144,7 +144,7 @@ func TestSearch(t *testing.T) {
 			if test.indexType == Memory {
 				index = newMemoryIndex()
 			} else {
-				index = newDBIndex("test.db", false)
+				index = newDBIndex("test.db", true)
 			}
 			url, err := parseURL(testURL)
 			if err != nil {
