@@ -4,31 +4,59 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 )
 
 func main() {
-	server := os.Getenv("SQL_SERVER_NAME")
-	user := os.Getenv("SQL_USER")
-	password := os.Getenv("SQL_USER_PASSWORD")
-	port := os.Getenv("SQL_SERVER_PORT")
-	database := os.Getenv("SQL_DATABASE")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	server, exists := os.LookupEnv("SQL_SERVER_NAME")
+	if !exists {
+		log.Fatalf("Error! Enviornment variable SQL_SERVER_NAME does not exist")
+	}
+	user, exists := os.LookupEnv("SQL_USER")
+	if !exists {
+		log.Fatalf("Error! Enviornment variable SQL_USER does not exist")
+	}
+	password, exists := os.LookupEnv("SQL_USER_PASSWORD")
+	if !exists {
+		log.Fatalf("Error! Environment variable SQL_USER_PASSWORD does not exist")
+	}
+	port, exists := os.LookupEnv("SQL_SERVER_PORT")
+	if !exists {
+		log.Fatalf("Error! Enviornment variable SQL_SERVER_PORT does not exist")
+	}
+	database, exists := os.LookupEnv("SQL_DATABASE")
+	if !exists {
+		log.Fatalf("Error! Enviornment variable SQL_DATABASE does not exist")
+	}
+	testAPI, exists := os.LookupEnv("TEST_API_ENDPOINT")
+	if !exists {
+		log.Fatalf("Error! Environment variable TEST_API_ENDPOINT does not exist")
+	}
+	api, exists := os.LookupEnv("API_ENDPOINT")
+	if !exists {
+		log.Fatalf("Error! Environment variable API_ENDPOINT does not exist")
+	}
 
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
+	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;",
 		server, user, password, port, database)
 
 	fmt.Printf("connString: %v\n", connString)
 	var idx Index
-	idx = newDBIndex("dev.db", true)
+	idx = newDBIndex(connString, true)
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "https://calm-field-07a2a211e.5.azurestaticapps.net"}, // Allow requests from this origin
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},                                                      // Allow these methods
-		AllowHeaders:     []string{"Content-Type"},                                                                // Allow these headers
-		AllowCredentials: true,                                                                                    // Allow cookies or other credentials
+		AllowOrigins:     []string{testAPI, api},             // Allow requests from this origin
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"}, // Allow these methods
+		AllowHeaders:     []string{"Content-Type"},           // Allow these headers
+		AllowCredentials: true,                               // Allow cookies or other credentials
 	}))
 
 	router.POST("/search", func(c *gin.Context) {
