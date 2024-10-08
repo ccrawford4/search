@@ -6,10 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	// Build connection string
+	server := os.Getenv("SQL_SERVER_NAME")
+	user := os.Getenv("SQL_USER")
+	password := os.Getenv("SQL_USER_PASSWORD")
+	port := os.Getenv("SQL_SERVER_PORT")
+	database := os.Getenv("SQL_DATABASE")
+
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
 		server, user, password, port, database)
 
