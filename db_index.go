@@ -90,8 +90,8 @@ func (idx *DBIndex) getTotalWords(url string) int {
 	return urlObj.Count
 }
 
-func newDBIndex(dbName string, resetDB bool) *DBIndex {
-	return &DBIndex{StopWords: getStopWords(), db: connectToDB(dbName, resetDB)}
+func newDBIndex(dbName string, db *gorm.DB) *DBIndex {
+	return &DBIndex{StopWords: getStopWords(), db: db}
 }
 
 func (idx *DBIndex) getStemmedWord(word string) string {
