@@ -1,34 +1,21 @@
 package main
 
 import (
-	_ "errors"
 	"fmt"
 	"github.com/gin-contrib/cors"
-	_ "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_ "github.com/gin-gonic/gin"
-	_ "github.com/microsoft/go-mssqldb"
-	_ "gorm.io/driver/sqlite"
-	_ "gorm.io/driver/sqlserver"
-	_ "gorm.io/gorm"
 	"log"
 	"net/http"
-	_ "net/http"
 )
 
 func main() {
-	var server = "devapisqlserver.database.windows.net"
-	var port = 1433
-	var user = "sqladmin"
-	var password = "u?g'U$nj5^rKxeGJjJ9l"
-	var database = "devdb1"
-
 	// Build connection string
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
 		server, user, password, port, database)
 
+	fmt.Printf("connString: %v\n", connString)
 	var idx Index
-	idx = newDBIndex(connString, false)
+	idx = newDBIndex("dev.db", true)
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
