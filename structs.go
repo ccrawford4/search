@@ -3,9 +3,6 @@ package main
 // Frequency can be used to map URLs to word frequency counts
 type Frequency map[string]int
 
-// Index map[word][URL]count
-type Index map[string]Frequency
-
 // Hit struct is used to format the template response
 // URL = the URL that a word is pulled from
 // TFIDF = the TF-IDF score (relevancy) of the document for the search
@@ -44,3 +41,9 @@ type TemplateData struct {
 	HITS Hits
 	TERM string
 }
+
+type IndexType int
+
+const (
+	Memory IndexType = iota
+)

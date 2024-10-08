@@ -14,6 +14,8 @@ func TestSearch(t *testing.T) {
 	tests := []struct {
 		name, path    string
 		pathFrequency Frequency
+		indexType     IndexType
+		expected      SearchResult
 	}{
 		{
 			"Verona",
@@ -21,12 +23,22 @@ func TestSearch(t *testing.T) {
 			Frequency{
 				"/tests/rnj/sceneI_30.0.html": 1,
 			},
+			0,
+			SearchResult{
+				TotalDocsSearched: 1,
+				Found:             true,
+			},
 		},
 		{
 			"Benvolio",
 			"/tests/rnj/sceneI_30.1.html",
 			Frequency{
 				"/tests/rnj/sceneI_30.1.html": 26,
+			},
+			0,
+			SearchResult{
+				TotalDocsSearched: 1,
+				Found:             true,
 			},
 		},
 		{
@@ -44,6 +56,57 @@ func TestSearch(t *testing.T) {
 				"/tests/rnj/sceneII_30.0.html": 3,
 				"/tests/rnj/sceneII_30.1.html": 10,
 				"/tests/rnj/sceneII_30.3.html": 13,
+			},
+			0,
+			SearchResult{
+				TotalDocsSearched: 11,
+				Found:             true,
+			},
+		},
+		{
+			"Verona",
+			"/tests/rnj/sceneI_30.0.html",
+			Frequency{
+				"/tests/rnj/sceneI_30.0.html": 1,
+			},
+			1,
+			SearchResult{
+				TotalDocsSearched: 1,
+				Found:             true,
+			},
+		},
+		{
+			"Benvolio",
+			"/tests/rnj/sceneI_30.1.html",
+			Frequency{
+				"/tests/rnj/sceneI_30.1.html": 26,
+			},
+			1,
+			SearchResult{
+				TotalDocsSearched: 1,
+				Found:             true,
+			},
+		},
+		{
+			"Romeo",
+			"/tests/rnj/",
+			Frequency{
+				"/tests/rnj/sceneI_30.0.html":  2,
+				"/tests/rnj/sceneI_30.1.html":  22,
+				"/tests/rnj/sceneI_30.3.html":  2,
+				"/tests/rnj/sceneI_30.4.html":  17,
+				"/tests/rnj/sceneI_30.5.html":  15,
+				"/tests/rnj/sceneII_30.2.html": 42,
+				"/tests/rnj/":                  200,
+				"/tests/rnj/sceneI_30.2.html":  15,
+				"/tests/rnj/sceneII_30.0.html": 3,
+				"/tests/rnj/sceneII_30.1.html": 10,
+				"/tests/rnj/sceneII_30.3.html": 13,
+			},
+			1,
+			SearchResult{
+				TotalDocsSearched: 11,
+				Found:             true,
 			},
 		},
 	}
@@ -69,23 +132,42 @@ func TestSearch(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			hostURL := parseURL(ts.URL)
-			testURL := clean(hostURL, test.path)
-
-			index := make(Index)
-			wordsInDoc := make(Frequency)
-			stopWords := getStopWords()
-			crawl(&index, &wordsInDoc, parseURL(testURL), stopWords)
-			got, _ := search(&index, test.name, stopWords)
-
-			expected := make(Frequency)
-			for path, freq := range test.pathFrequency {
-				expected[clean(hostURL, path)] += freq
+			hostURL, err := parseURL(ts.URL)
+			if err != nil {
+				t.Fatalf("Could not parse URL: %v\n", ts.URL)
 			}
+			testURL, err := clean(hostURL, test.path)
+			if err != nil {
+				t.Fatalf("Could not clean URL: %v\n", test.path)
+			}
+			var index Index
+			if test.indexType == Memory {
+				index = newMemoryIndex()
+			} else {
+				index = newDBIndex("test.db", false)
+			}
+			url, err := parseURL(testURL)
+			if err != nil {
+				t.Fatalf("Could not parse URL: %v\n", testURL)
+			}
+			crawl(&index, url)
+			got := index.search(test.name)
 
-			if diff := deep.Equal(got, expected); diff != nil {
+			expectedTermFrequency := make(Frequency)
+			for path, freq := range test.pathFrequency {
+				cleanedUrl, err := clean(hostURL, path)
+				if err != nil {
+					t.Fatalf("Could not clean URL: %v\n", path)
+				}
+				expectedTermFrequency[cleanedUrl] += freq
+			}
+			test.expected.TermFrequency = expectedTermFrequency
+			dropDatabase("test.db")
+
+			if diff := deep.Equal(got, &test.expected); diff != nil {
 				t.Error(diff)
 			}
+
 		})
 	}
 }

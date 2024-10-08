@@ -47,8 +47,14 @@ func TestCleanHref(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			hostURL := parseURL(test.host)
-			got := clean(hostURL, test.url)
+			hostURL, err := parseURL(test.host)
+			if err != nil {
+				t.Fatalf("Error parsing url: %v\n", err)
+			}
+			got, err := clean(hostURL, test.url)
+			if err != nil {
+				t.Fatalf("Error cleaning url: %v\n", err)
+			}
 			if got != test.expectedOutput {
 				t.Errorf("got %q, want %q", got, test.expectedOutput)
 			}
