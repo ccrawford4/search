@@ -137,7 +137,7 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	}
 
 	// Finally go through the names again and if they are not in the database then create them
-	var newWords []Record
+	var newWords []*Word
 	for word := range c.TermFrequency {
 		if !seenNames.Contains(word) {
 			newWords = append(newWords, &Word{Name: word})
@@ -145,15 +145,14 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	}
 
 	batchSize := 500 // Set the desired batch size
-	if err := batchInsert(idx.db, newWords, &Word{}, batchSize); err != nil {
+	if err := batchInsertWords(idx.db, newWords, batchSize); err != nil {
 		log.Printf("Error inserting words: %v", err)
 		return
 	}
 
 	// Now create the word frequency records array
-	var wordFrequencyRecords []Record
-	for _, record := range newWords {
-		word := record.GetWord()
+	var wordFrequencyRecords []*WordFrequencyRecord
+	for _, word := range newWords {
 		if !seenNames.Contains(word.Name) {
 			wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
 				Url:    url,
@@ -164,8 +163,8 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 			})
 		}
 	}
-	// TODO: issue here with passing generic type.
-	if err = batchInsert(idx.db, wordFrequencyRecords, &WordFrequencyRecord{}, batchSize); err != nil {
+
+	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, batchSize); err != nil {
 		log.Printf("Error inserting word frequency records %v", err)
 	}
 }
