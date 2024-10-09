@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-test/deep"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
+	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -20,12 +22,15 @@ func TestCrawl(t *testing.T) {
 	hrefWords = append(hrefWords, simpleWords...)
 	styleWords, _ := extract(styleDoc)
 	styleWords = append(styleWords, hrefWords...)
+	stopWords := getStopWords()
 
 	tests := []struct {
 		name                         string
 		expectedHrefs, expectedWords []string
 		serverContent                map[string][]byte
 		numDocs                      float64
+		index                        Index
+		expectedIndex                *MemoryIndex
 	}{
 		{
 			"simple",
@@ -35,6 +40,39 @@ func TestCrawl(t *testing.T) {
 				"/": simpleDoc,
 			},
 			1,
+			newMemoryIndex(),
+			&MemoryIndex{
+				stopWords,
+				Frequency{
+					"http://127.0.0.1:8080/": 8,
+				},
+				IndexMap{
+					"there": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"are": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"no": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"links": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"here": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"hello": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"cs": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"272": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+				},
+			},
 		},
 		{
 			"href",
@@ -48,6 +86,58 @@ func TestCrawl(t *testing.T) {
 				"/tests/project01/simple.html": simpleDoc,
 			},
 			2,
+			newMemoryIndex(),
+			&MemoryIndex{
+				stopWords,
+				Frequency{
+					"http://127.0.0.1:8080/":                            7,
+					"http://127.0.0.1:8080/tests/project01/simple.html": 8,
+				},
+				IndexMap{
+					"there": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"are": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"no": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"links": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"here": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"hello": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"cs": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"272": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"a": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"see": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"simple": Frequency{
+						"http://127.0.0.1:8080/": 2,
+					},
+					"example": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"for": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"html": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+				},
+			},
 		},
 		{
 			"style",
@@ -63,6 +153,87 @@ func TestCrawl(t *testing.T) {
 				"/tests/project01/simple.html": simpleDoc,
 			},
 			3,
+			newMemoryIndex(),
+			&MemoryIndex{
+				stopWords,
+				Frequency{
+					"http://127.0.0.1:8080/":                            16,
+					"http://127.0.0.1:8080/tests/project01/href.html":   7,
+					"http://127.0.0.1:8080/tests/project01/simple.html": 8,
+				},
+				IndexMap{
+					"there": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"are": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"no": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"links": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"here": Frequency{
+						"http://127.0.0.1:8080/":                            1,
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"hello": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"cs": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"272": Frequency{
+						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					},
+					"a": Frequency{
+						"http://127.0.0.1:8080/":                          2,
+						"http://127.0.0.1:8080/tests/project01/href.html": 1,
+					},
+					"see": Frequency{
+						"http://127.0.0.1:8080/tests/project01/href.html": 1,
+					},
+					"simple": Frequency{
+						"http://127.0.0.1:8080/":                          1,
+						"http://127.0.0.1:8080/tests/project01/href.html": 2,
+					},
+					"example": Frequency{
+						"http://127.0.0.1:8080/tests/project01/href.html": 1,
+					},
+					"for": Frequency{
+						"http://127.0.0.1:8080/tests/project01/href.html": 1,
+					},
+					"html": Frequency{
+						"http://127.0.0.1:8080/":                          2,
+						"http://127.0.0.1:8080/tests/project01/href.html": 1,
+					},
+					"is": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"to": Frequency{
+						"http://127.0.0.1:8080/": 2,
+					},
+					"and": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"red": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"blue": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"href": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"style": Frequency{
+						"http://127.0.0.1:8080/": 1,
+					},
+					"link": Frequency{
+						"http://127.0.0.1:8080/": 2,
+					},
+				},
+			},
 		},
 		{
 			"repeat-href",
@@ -77,6 +248,16 @@ func TestCrawl(t *testing.T) {
 				"repeat-href": repeatDoc,
 			},
 			2,
+			newMemoryIndex(),
+
+			&MemoryIndex{
+				stopWords,
+				Frequency{
+					"http://127.0.0.1:8080/":            0,
+					"http://127.0.0.1:8080/repeat-href": 0,
+				},
+				IndexMap{},
+			},
 		},
 		{
 			"outside-domain",
@@ -88,6 +269,14 @@ func TestCrawl(t *testing.T) {
 				"/": []byte("<html><body><a href=\"https://wikipedia.org\"></a></body></html>"),
 			},
 			1,
+			newMemoryIndex(),
+			&MemoryIndex{
+				stopWords,
+				Frequency{
+					"http://127.0.0.1:8080/": 0,
+				},
+				IndexMap{},
+			},
 		},
 	}
 
@@ -102,23 +291,72 @@ func TestCrawl(t *testing.T) {
 			fmt.Printf("ts: %v\n", ts.URL)
 			defer ts.Close()
 
-			expectedIndex := make(Index)
-			index := make(Index)
-			wordsInDoc := make(Frequency)
-			stopWords := getStopWords()
-			svrURL := parseURL(ts.URL)
+			svrURL, err := parseURL(ts.URL)
+			if err != nil {
+				log.Fatalf("Error parsing URL: %v\n", err.Error())
+			}
+			crawl(&test.index, svrURL)
 
-			crawl(&index, &wordsInDoc, svrURL, stopWords)
-			for path, doc := range test.serverContent {
-				fullURL := clean(svrURL, path)
-				words, _ := extract(doc)
-				wordFreq := createWordFrequency(words, stopWords)
-				wordsInDoc[fullURL] = len(wordFreq)
-				populateIndexValues(&expectedIndex, fullURL, &wordFreq)
+			hostParts := strings.Split(svrURL.Host, ":")
+			mockSVRPort := hostParts[len(hostParts)-1]
+
+			// Iterate over the map and update the keys with the new port number
+			for oldURL := range test.expectedIndex.WordCount {
+				// Parse the URL
+				u, err := url.Parse(oldURL)
+				if err != nil {
+					fmt.Printf("Error parsing URL: %v\n", err)
+					continue
+				}
+
+				// Split the host to update the port
+				hostParts = strings.Split(u.Host, ":")
+				if len(hostParts) > 1 {
+					// Continue if you already have the correct server port
+					if hostParts[1] == mockSVRPort {
+						continue
+					}
+					// Replace the old port with the new port number
+					u.Host = hostParts[0] + ":" + mockSVRPort
+				}
+
+				// Insert the new URL into the map
+				test.expectedIndex.WordCount[u.String()] = test.expectedIndex.WordCount[oldURL]
+
+				// Delete the old key
+				delete(test.expectedIndex.WordCount, oldURL)
 			}
 
-			if !reflect.DeepEqual(index, expectedIndex) {
-				t.Errorf("expected: %v\n, got: %v\n", expectedIndex, index)
+			for term := range test.expectedIndex.Index {
+				for oldURL := range test.expectedIndex.Index[term] {
+					// Parse the URL
+					u, err := url.Parse(oldURL)
+					if err != nil {
+						fmt.Printf("Error parsing URL: %v\n", err)
+						continue
+					}
+
+					// Split the host to update the port
+					hostParts = strings.Split(u.Host, ":")
+					if len(hostParts) > 1 {
+						// Continue if you already have the correct server port
+						if hostParts[1] == mockSVRPort {
+							continue
+						}
+						// Replace the old port with the new port number
+						u.Host = hostParts[0] + ":" + mockSVRPort
+					}
+
+					// Insert the new URL into the map
+					test.expectedIndex.Index[term][u.String()] = test.expectedIndex.Index[term][oldURL]
+
+					// Delete the old key
+					delete(test.expectedIndex.Index[term], oldURL)
+				}
+			}
+
+			if diff := deep.Equal(test.index, test.expectedIndex); diff != nil {
+				t.Error(diff)
 			}
 		})
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 )
@@ -15,17 +16,21 @@ func ensureLeadingSlash(href string) string {
 }
 
 // clean takes a host URL and a href, and returns the fully formatted URL.
-func clean(host *url.URL, href string) string {
-	relativeURL := parseURL(href)
+func clean(host *url.URL, href string) (string, error) {
+	relativeURL, err := parseURL(href)
+	if err != nil {
+		log.Printf("Could not parseHREF")
+		return href, err
+	}
 
 	// Return the href if it is already a full URL.
 	if relativeURL.Scheme != "" {
-		return href
+		return href, nil
 	}
 
 	// Ensure the href starts with a '/' if it's a relative path.
 	href = ensureLeadingSlash(href)
 
 	// Construct the full URL using the host's scheme and host.
-	return fmt.Sprintf("%s://%s%s", host.Scheme, host.Host, href)
+	return fmt.Sprintf("%s://%s%s", host.Scheme, host.Host, href), nil
 }

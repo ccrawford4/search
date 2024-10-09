@@ -1,22 +1,12 @@
 package main
 
 import (
-	"github.com/emirpasic/gods/sets/hashset"
 	"math"
 	"sort"
 )
 
-// createWordFrequency creates a Frequency map
-// with words as the keys, and their counts as values
-func createWordFrequency(words []string, stopWords *hashset.Set) Frequency {
-	freq := make(Frequency)
-	for _, word := range words {
-		stemmedWord := getStemmedWord(word, stopWords)
-		freq[stemmedWord] += 1
-	}
-	return freq
-}
-
+// calculateIDF returns the IDF score based on the number of
+// docs containing a word and the total number of docs searched
 func calculateIDF(docsContainingWord float64, numDocs float64) float64 {
 	return math.Log10(numDocs / (docsContainingWord + 1))
 }
@@ -32,26 +22,21 @@ func calculateTFIDF(termCount, totalWords, docsContainingWord, numDocs float64) 
 	return calculateTF(termCount, totalWords) * calculateIDF(docsContainingWord, numDocs)
 }
 
-//func populateTFIDFValues(index *Index, numDocs float64, wordsInDoc Frequency) {
-//	for word, frequency := range *index {
-//		idf := calculateIDF(index, numDocs, word)
-//		for URL, termCount := range frequency {
-//			totalWords := wordsInDoc[URL]
-//			// Compute the TF-IDF by multiplying the TF * IDF
-//			tf := calculateTF((float64)(termCount), (float64)(totalWords))
-//			(*index)[word][URL] = tf * idf
-//		}
-//	}
-//}
-
 // getTemplateData takes in a Frequency object and
 // a searchTerm and returns the formated TemplateData response
-func getTemplateData(freq Frequency, searchTerm string, numDocs float64, urlWordTotals *Frequency) *TemplateData {
-	// Iterate through the frequency map and populate the hits array
+func getTemplateData(index *Index, searchTerm string) *TemplateData {
+	searchResults := (*index).search(searchTerm)
+	if !searchResults.Found {
+		return nil
+	}
+
 	var hits Hits
-	docsContainingWord := (float64)(len(freq))
-	for url, count := range freq {
-		totalWords := (float64)((*urlWordTotals)[url])
+	docsContainingWord := (float64)(len(searchResults.TermFrequency))
+	numDocs := float64(searchResults.TotalDocsSearched)
+
+	// Iterate through the frequency map and populate the hits array
+	for url, count := range searchResults.TermFrequency {
+		totalWords := (float64)((*index).getTotalWords(url))
 		tfidf := calculateTFIDF((float64)(count), totalWords, docsContainingWord, numDocs)
 		hits = append(hits, Hit{url, tfidf})
 	}
