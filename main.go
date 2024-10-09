@@ -1,22 +1,19 @@
 package main
 
 import (
-	_ "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	_ "github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
-	_ "net/http"
 	"os"
 )
 
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error loading .env file: %v\n", err)
 	}
-	connString, exists := os.LookupEnv("AZURE_S_CONNECTIONSTRING")
+	connString, exists := os.LookupEnv("AZURE_SQL_CONNECTIONSTRING")
 	if !exists {
 		log.Fatalf("No Connection AZURE_SQL_CONNECTIONSTRING Provided\n")
 	}
