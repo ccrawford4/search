@@ -109,6 +109,15 @@ func (idx *DBIndex) getStemmedWord(word string) string {
 	return word
 }
 
+func contains(words []string, word string) bool {
+	for _, w := range words {
+		if w == word {
+			return true
+		}
+	}
+	return false
+}
+
 func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	url := Url{
 		Name:  c.Url,
@@ -133,9 +142,19 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 		words = append(words, &Word{Name: term})
 	}
 
+	// TODO: Change this to do a batch creation effectively for the azure SQL database
+	//  1. Identify all the words we already have -> filter them out from the existingWords
+	//  2. Create these word objects and then do a batch creation
+	// var existingWords []string
+
+	// Identify all the existing words
+	// idx.db.Model(&Word{}).Select("name").Where("name IN ?", terms).Find(&existingWords)
+
+	// var newWords []string
+
 	// Batch Create of Words with OnConflict handling
 	idx.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}},
+		//Columns:   []clause.Column{{Name: "name"}},
 		DoNothing: true,
 	}).Create(&words)
 
@@ -170,6 +189,7 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 		}
 	}
 
+	// TODO: Same thing here.
 	result := idx.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "word_id"}, {Name: "url_id"}}, // Use WordID and UrlID for uniqueness
 		DoUpdates: clause.AssignmentColumns([]string{"count"}),          // Update 'count' on conflict

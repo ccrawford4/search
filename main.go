@@ -49,7 +49,7 @@ func main() {
 
 	fmt.Printf("connString: %v\n", connString)
 	var idx Index
-	idx = newDBIndex(connString, true)
+	idx = newDBIndex(connString, false)
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
