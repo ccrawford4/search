@@ -164,6 +164,7 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 		}
 	}
 
+	// TODO: Need to do a batch update for any that have already been found
 	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, batchSize); err != nil {
 		log.Printf("Error inserting word frequency records %v", err)
 	}
