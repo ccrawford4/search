@@ -18,33 +18,29 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	server, exists := os.LookupEnv("SQL_SERVER_NAME")
+	server, exists := os.LookupEnv("server")
 	if !exists {
-		log.Fatalf("Error! Enviornment variable SQL_SERVER_NAME does not exist")
+		log.Fatalf("Error! Enviornment variable 'server' does not exist")
 	}
-	user, exists := os.LookupEnv("SQL_USER")
+	user, exists := os.LookupEnv("user")
 	if !exists {
-		log.Fatalf("Error! Enviornment variable SQL_USER does not exist")
+		log.Fatalf("Error! Enviornment variable 'user' does not exist")
 	}
-	password, exists := os.LookupEnv("SQL_USER_PASSWORD")
+	password, exists := os.LookupEnv("password")
 	if !exists {
-		log.Fatalf("Error! Environment variable SQL_USER_PASSWORD does not exist")
+		log.Fatalf("Error! Environment variable 'password' does not exist")
 	}
-	port, exists := os.LookupEnv("SQL_SERVER_PORT")
+	port, exists := os.LookupEnv("port")
 	if !exists {
-		log.Fatalf("Error! Enviornment variable SQL_SERVER_PORT does not exist")
+		log.Fatalf("Error! Enviornment variable 'port' does not exist")
 	}
-	database, exists := os.LookupEnv("SQL_DATABASE")
+	database, exists := os.LookupEnv("database")
 	if !exists {
-		log.Fatalf("Error! Enviornment variable SQL_DATABASE does not exist")
+		log.Fatalf("Error! Enviornment variable 'database' does not exist")
 	}
-	testAPI, exists := os.LookupEnv("TEST_API_ENDPOINT")
+	api, exists := os.LookupEnv("api")
 	if !exists {
-		log.Fatalf("Error! Environment variable TEST_API_ENDPOINT does not exist")
-	}
-	api, exists := os.LookupEnv("API_ENDPOINT")
-	if !exists {
-		log.Fatalf("Error! Environment variable API_ENDPOINT does not exist")
+		log.Fatalf("Error! Environment variable 'api' does not exist")
 	}
 
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;",
@@ -58,7 +54,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{testAPI, api},             // Allow requests from this origin
+		AllowOrigins:     []string{api},                      // Allow requests from this origin
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"}, // Allow these methods
 		AllowHeaders:     []string{"Content-Type"},           // Allow these headers
 		AllowCredentials: true,                               // Allow cookies or other credentials
