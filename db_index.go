@@ -5,7 +5,6 @@ import (
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/kljensen/snowball"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"log"
 	"strings"
 )
@@ -109,16 +108,8 @@ func (idx *DBIndex) getStemmedWord(word string) string {
 	return word
 }
 
-func contains(words []string, word string) bool {
-	for _, w := range words {
-		if w == word {
-			return true
-		}
-	}
-	return false
-}
-
 func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
+	// Create the URL object
 	url := Url{
 		Name:  c.Url,
 		Count: c.TotalWords,
@@ -126,76 +117,55 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	err := getItemOrCreate(idx.db, &url)
 	if err != nil {
 		log.Printf("Error fetching or Creating URL %v: %v\n", url, err)
+		return
 	}
 
-	var words []*Word
-	var termCounts []int
-
-	terms := make([]string, 0, len(c.TermFrequency))
-	for term, frequency := range c.TermFrequency {
-		terms = append(terms, term)
-		termCounts = append(termCounts, frequency)
+	// Extract all the names from the termFrequency
+	names := make([]string, 0, len(c.TermFrequency))
+	for word := range c.TermFrequency {
+		names = append(names, word)
 	}
 
-	// Create Word objects
-	for _, term := range terms {
-		words = append(words, &Word{Name: term})
+	// Identify all the ones that have the matching name in the db
+	var existingWords []*Word
+	idx.db.Model(&Word{}).Select("name").Where("name IN ?", names).Find(&existingWords)
+
+	// Now keep track of all the names that are already in the database
+	seenNames := hashset.New()
+	for _, word := range existingWords {
+		seenNames.Add(word.Name)
 	}
 
-	// TODO: Change this to do a batch creation effectively for the azure SQL database
-	//  1. Identify all the words we already have -> filter them out from the existingWords
-	//  2. Create these word objects and then do a batch creation
-	// var existingWords []string
-
-	// Identify all the existing words
-	// idx.db.Model(&Word{}).Select("name").Where("name IN ?", terms).Find(&existingWords)
-
-	// var newWords []string
-
-	// Batch Create of Words with OnConflict handling
-	idx.db.Clauses(clause.OnConflict{
-		//Columns:   []clause.Column{{Name: "name"}},
-		DoNothing: true,
-	}).Create(&words)
-
-	// Retrieve all existing words to ensure we have correct references
-	var existingWords []Word
-	idx.db.Where("name IN ?", terms).Find(&existingWords)
-
-	// Replace the original words slice with the existing ones from the database
-	words = make([]*Word, len(existingWords))
-	for i, w := range existingWords {
-		words[i] = &w
+	// Finally go through the names again and if they are not in the database then create them
+	var newWords []Record
+	for word := range c.TermFrequency {
+		if !seenNames.Contains(word) {
+			newWords = append(newWords, &Word{Name: word})
+		}
 	}
 
-	var wordFrequencyRecords []*WordFrequencyRecord
-
-	// Create a map to associate terms with their corresponding existing words
-	wordMap := make(map[string]*Word)
-	for _, w := range existingWords {
-		wordMap[w.Name] = &w
+	batchSize := 500 // Set the desired batch size
+	if err := batchInsert(idx.db, newWords, &Word{}, batchSize); err != nil {
+		log.Printf("Error inserting words: %v", err)
+		return
 	}
 
-	// Populate the WordFrequencyRecord
-	for term, frequency := range c.TermFrequency {
-		if word, found := wordMap[term]; found {
+	// Now create the word frequency records array
+	var wordFrequencyRecords []Record
+	for _, record := range newWords {
+		word := record.GetWord()
+		if !seenNames.Contains(word.Name) {
 			wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
 				Url:    url,
 				Word:   *word,
 				WordID: word.ID,
 				UrlID:  url.ID,
-				Count:  frequency,
+				Count:  c.TermFrequency[word.Name],
 			})
 		}
 	}
-
-	// TODO: Same thing here.
-	result := idx.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "word_id"}, {Name: "url_id"}}, // Use WordID and UrlID for uniqueness
-		DoUpdates: clause.AssignmentColumns([]string{"count"}),          // Update 'count' on conflict
-	}).Create(&wordFrequencyRecords)
-
-	if result.Error != nil {
-		log.Printf("Error inserting CrawlResults: %v\n", result.Error)
+	// TODO: issue here with passing generic type.
+	if err = batchInsert(idx.db, wordFrequencyRecords, &WordFrequencyRecord{}, batchSize); err != nil {
+		log.Printf("Error inserting word frequency records %v", err)
 	}
 }

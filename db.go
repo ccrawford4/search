@@ -27,6 +27,18 @@ type WordFrequencyRecord struct {
 	Url    Url
 }
 
+func (word *Word) GetWord() *Word {
+	return word
+}
+
+func (wfr *WordFrequencyRecord) GetWord() *Word {
+	return &wfr.Word
+}
+
+type Record interface {
+	GetWord() *Word
+}
+
 // migrateTables migrates the Word, Url, and WordFrequencyRecord tables using autoMigrate
 func migrateTables(db *gorm.DB) {
 	err := db.AutoMigrate(&Word{}, &Url{}, &WordFrequencyRecord{})
@@ -98,4 +110,21 @@ func getItemOrCreate[K *Word | *WordFrequencyRecord | *Url](db *gorm.DB, object 
 		err = create(db, object)
 	}
 	return err
+}
+
+func batchInsert[T *Word | *WordFrequencyRecord](db *gorm.DB, records []Record, model T, batchSize int) error {
+	for i := 0; i < len(records); i += batchSize {
+		end := i + batchSize
+		if end > len(records) {
+			end = len(records)
+		}
+
+		batch := records[i:end]
+
+		// Use Create for the batch
+		if err := db.Model(model).Create(&batch).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
