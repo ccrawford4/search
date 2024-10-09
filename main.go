@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/gin-contrib/cors"
+	_ "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	_ "github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	_ "net/http"
 	"os"
 )
 
@@ -46,6 +49,8 @@ func main() {
 
 	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s;database=%s;",
 		server, user, password, port, database)
+
+	// playground(connString)
 
 	fmt.Printf("connString: %v\n", connString)
 	var idx Index

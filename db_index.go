@@ -138,7 +138,7 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 
 	// Identify all the ones that have the matching name in the db
 	var existingWords []*Word
-	idx.db.Model(&Word{}).Select("name").Where("name IN ?", names).Find(&existingWords)
+	idx.db.Model(&Word{}).Select("name", "id").Where("name IN ?", names).Find(&existingWords)
 
 	for _, word := range existingWords {
 		if word.Name == "the" {
