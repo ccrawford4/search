@@ -100,22 +100,54 @@ func getItemOrCreate[K *Word | *WordFrequencyRecord | *Url](db *gorm.DB, object 
 	return err
 }
 
-//func batchInsert[T *Word | *WordFrequencyRecord](db *gorm.DB, records []Record, model T, batchSize int) error {
-//	for i := 0; i < len(records); i += batchSize {
-//		end := i + batchSize
-//		if end > len(records) {
-//			end = len(records)
-//		}
-//
-//		batch := records[i:end]
-//
-//		// Use Create for the batch
-//		if err := db.Model(model).Create(&batch).Error; err != nil {
-//			return err
-//		}
-//	}
-//	return nil
-//}
+func batchUpsertWordFrequencyRecords(db *gorm.DB, wordFrequencyRecords []*WordFrequencyRecord, batchSize int) error {
+	if len(wordFrequencyRecords) == 0 {
+		return nil
+	}
+
+	// Helper function to execute a single batch upsert
+	upsertBatch := func(batch []*WordFrequencyRecord) error {
+		sqlStatement := `
+		MERGE INTO word_frequency_records AS target
+		USING (VALUES`
+
+		values := []interface{}{}
+		for i, record := range batch {
+			if i > 0 {
+				sqlStatement += ","
+			}
+			sqlStatement += " (?, ?, ?)"
+			values = append(values, record.WordID, record.UrlID, record.Count)
+		}
+
+		sqlStatement += `
+		) AS source (word_id, url_id, count)
+		ON target.word_id = source.word_id AND target.url_id = source.url_id
+		WHEN MATCHED THEN
+			UPDATE SET target.count = source.count
+		WHEN NOT MATCHED THEN
+			INSERT (word_id, url_id, count)
+			VALUES (source.word_id, source.url_id, source.count);`
+
+		// Execute the raw SQL with Gorm
+		return db.Exec(sqlStatement, values...).Error
+	}
+
+	// Process the records in batches
+	for i := 0; i < len(wordFrequencyRecords); i += batchSize {
+		end := i + batchSize
+		if end > len(wordFrequencyRecords) {
+			end = len(wordFrequencyRecords)
+		}
+
+		// Upsert the current batch
+		if err := upsertBatch(wordFrequencyRecords[i:end]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func batchInsertWords(db *gorm.DB, words []*Word, batchSize int) error {
 	for i := 0; i < len(words); i += batchSize {
@@ -132,17 +164,33 @@ func batchInsertWords(db *gorm.DB, words []*Word, batchSize int) error {
 	return nil
 }
 
-func batchInsertWordFrequencyRecords(db *gorm.DB, records []*WordFrequencyRecord, batchSize int) error {
-	for i := 0; i < len(records); i += batchSize {
+func batchInsertWordFrequencyRecords(db *gorm.DB, wordFrequencyRecords []*WordFrequencyRecord, batchSize int) error {
+	if len(wordFrequencyRecords) == 0 {
+		return nil
+	}
+
+	// Helper function to execute a batch insert
+	insertBatch := func(batch []*WordFrequencyRecord) error {
+		// Perform a batch insert using Gorm's CreateInBatches
+		// TODO: creating in batches still not working here
+		if err := db.CreateInBatches(batch, batchSize).Error; err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Process the records in batches
+	for i := 0; i < len(wordFrequencyRecords); i += batchSize {
 		end := i + batchSize
-		if end > len(records) {
-			end = len(records)
+		if end > len(wordFrequencyRecords) {
+			end = len(wordFrequencyRecords)
 		}
 
-		batch := records[i:end]
-		if err := db.Create(&batch).Error; err != nil {
+		// Insert the current batch
+		if err := insertBatch(wordFrequencyRecords[i:end]); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

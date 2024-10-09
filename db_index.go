@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/kljensen/snowball"
 	"gorm.io/gorm"
@@ -123,12 +124,27 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	// Extract all the names from the termFrequency
 	names := make([]string, 0, len(c.TermFrequency))
 	for word := range c.TermFrequency {
+		if word == "the" {
+			fmt.Printf("found the!: %v\n", word)
+		}
 		names = append(names, word)
+	}
+
+	for _, word := range names {
+		if word == "the" {
+			fmt.Printf("found the: %v\n", word)
+		}
 	}
 
 	// Identify all the ones that have the matching name in the db
 	var existingWords []*Word
 	idx.db.Model(&Word{}).Select("name").Where("name IN ?", names).Find(&existingWords)
+
+	for _, word := range existingWords {
+		if word.Name == "the" {
+			fmt.Printf("Found the!: %v\n", word)
+		}
+	}
 
 	// Now keep track of all the names that are already in the database
 	seenNames := hashset.New()
@@ -143,29 +159,41 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 			newWords = append(newWords, &Word{Name: word})
 		}
 	}
-
-	batchSize := 500 // Set the desired batch size
-	if err := batchInsertWords(idx.db, newWords, batchSize); err != nil {
+	// Set the desired batch size
+	if err := batchInsertWords(idx.db, newWords, 500); err != nil {
 		log.Printf("Error inserting words: %v", err)
 		return
 	}
 
+	var allWords []*Word
+	allWords = append(newWords, existingWords...)
+
 	// Now create the word frequency records array
 	var wordFrequencyRecords []*WordFrequencyRecord
-	for _, word := range newWords {
-		if !seenNames.Contains(word.Name) {
-			wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
-				Url:    url,
-				Word:   *word,
-				WordID: word.ID,
-				UrlID:  url.ID,
-				Count:  c.TermFrequency[word.Name],
-			})
+	for _, word := range allWords {
+		if word.Name == "the" {
+			fmt.Printf("found the!: %v\n", word)
+		}
+		wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
+			Url:    url,
+			Word:   *word,
+			WordID: word.ID,
+			UrlID:  url.ID,
+			Count:  c.TermFrequency[word.Name],
+		})
+	}
+	//// TODO: Need to do a batch update for any that have already been found
+	//if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, batchSize); err != nil {
+	//	log.Printf("Error inserting word frequency records %v", err)
+	//}
+
+	for _, item := range wordFrequencyRecords {
+		if item.Word.Name == "the" {
+			fmt.Printf("FOUND THE WORD THE")
 		}
 	}
 
-	// TODO: Need to do a batch update for any that have already been found
-	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, batchSize); err != nil {
-		log.Printf("Error inserting word frequency records %v", err)
+	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, 250); err != nil {
+		log.Printf("Error upserting word frequency records %v", err)
 	}
 }
