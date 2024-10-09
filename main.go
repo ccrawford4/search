@@ -8,15 +8,22 @@ import (
 	"os"
 )
 
-func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %v\n", err)
+func init() {
+	// Only load .env file in development environment
+	if os.Getenv("ENV") == "development" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file: %v\n", err)
+		}
 	}
+}
+
+func main() {
 	connString, exists := os.LookupEnv("AZURE_SQL_CONNECTIONSTRING")
 	if !exists {
 		log.Fatalf("No Connection AZURE_SQL_CONNECTIONSTRING Provided\n")
 	}
+	log.Printf("Connecting string loaded successfully")
 
 	var idx Index
 	idx = newDBIndex(connString, false)
