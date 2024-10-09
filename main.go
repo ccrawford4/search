@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	connString, exists := os.LookupEnv("AZURE_SQL_CONNECTIONSTRING")
+	connString, exists := os.LookupEnv("AZURE_S_CONNECTIONSTRING")
 	if !exists {
 		log.Fatalf("No Connection AZURE_SQL_CONNECTIONSTRING Provided\n")
 	}
