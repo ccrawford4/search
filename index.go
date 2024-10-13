@@ -3,7 +3,6 @@ package main
 type SearchResult struct {
 	TermFrequency     Frequency `json:"termFrequency,omitempty"`
 	TotalDocsSearched int       `json:"totalDocsSearched,omitempty"`
-	Found             bool      `json:"found,omitempty"`
 }
 
 type Index interface {

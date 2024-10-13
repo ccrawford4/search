@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
+	"github.com/go-redis/redis/v8"
 	"github.com/kljensen/snowball"
 	"gorm.io/gorm"
 	"log"
@@ -13,6 +14,7 @@ import (
 type DBIndex struct {
 	StopWords *hashset.Set
 	db        *gorm.DB
+	rsClient  *redis.Client
 }
 
 func (idx *DBIndex) isStopWord(s string) bool {
@@ -27,9 +29,7 @@ func (idx *DBIndex) containsUrl(url string) bool {
 	return result.Error == nil
 }
 
-func (idx *DBIndex) search(word string) *SearchResult {
-	// Get stemmed version of the input word
-	searchTerm := idx.getStemmedWord(word)
+func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 	wordObj := Word{Name: searchTerm}
 
 	// Get total count of URLs in the database
@@ -77,6 +77,23 @@ func (idx *DBIndex) search(word string) *SearchResult {
 	}
 }
 
+func (idx *DBIndex) search(word string) *SearchResult {
+	searchTerm := idx.getStemmedWord(word)
+	result, err := fetchFromCache(idx.rsClient, searchTerm)
+	if err != nil {
+		log.Printf("Cache miss for word %q Fetching from DB now\n", word)
+		result = idx.fetchFromDB(word)
+	} else {
+		log.Printf("Cache hit for term %q\n", word)
+		result.Found = true
+	}
+	err = insertIntoCache(idx.rsClient, searchTerm, result)
+	if err != nil {
+		log.Printf("Failed to insert %q into cache: %v\n", word, err)
+	}
+	return result
+}
+
 func (idx *DBIndex) getTotalWords(url string) int {
 	urlObj := Url{
 		Name: url,
@@ -89,12 +106,12 @@ func (idx *DBIndex) getTotalWords(url string) int {
 	return urlObj.Count
 }
 
-func newDBIndex(connString string, useSqlite bool) *DBIndex {
+func newDBIndex(connString string, useSqlite bool, rsClient *redis.Client) *DBIndex {
 	db, err := connectToDB(connString, useSqlite)
 	if err != nil {
 		log.Fatalf("Error connecting to DB: %v\n", err)
 	}
-	return &DBIndex{StopWords: getStopWords(), db: db}
+	return &DBIndex{StopWords: getStopWords(), db: db, rsClient: rsClient}
 }
 
 func (idx *DBIndex) getStemmedWord(word string) string {
@@ -110,7 +127,6 @@ func (idx *DBIndex) getStemmedWord(word string) string {
 }
 
 func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
-	// Create the URL object
 	url := Url{
 		Name:  c.Url,
 		Count: c.TotalWords,
@@ -181,16 +197,6 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 			UrlID:  url.ID,
 			Count:  c.TermFrequency[word.Name],
 		})
-	}
-	//// TODO: Need to do a batch update for any that have already been found
-	//if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, batchSize); err != nil {
-	//	log.Printf("Error inserting word frequency records %v", err)
-	//}
-
-	for _, item := range wordFrequencyRecords {
-		if item.Word.Name == "the" {
-			fmt.Printf("FOUND THE WORD THE")
-		}
 	}
 
 	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, 250); err != nil {

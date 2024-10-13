@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"time"
@@ -30,23 +29,25 @@ func getRSClient(redisHost, redisPassword string) (*redis.Client, error) {
 	return client, nil
 }
 
-func createSearchResult(rsClient *redis.Client, searchTerm string, searchResult *SearchResult) error {
+func insertIntoCache(rsClient *redis.Client, searchTerm string, searchResult *SearchResult) error {
 	// Marshal the searchResult to JSON
 	data, err := json.Marshal(searchResult)
 	if err != nil {
+		log.Printf("failed to marshal search result - %v", err)
 		return err
 	}
 
 	// Set the JSON data as a value for the search term key
 	err = rsClient.Set(context.Background(), keyPrefix+searchTerm, data, 0).Err()
 	if err != nil {
+		log.Printf("failed to save search result - %v", err)
 		return err
 	}
 
 	return nil
 }
 
-func getSearchResult(rsClient *redis.Client, searchTerm string) (*SearchResult, error) {
+func fetchFromCache(rsClient *redis.Client, searchTerm string) (*SearchResult, error) {
 	result, err := rsClient.Get(context.Background(), keyPrefix+searchTerm).Result()
 	if err != nil {
 		return nil, err
@@ -55,11 +56,13 @@ func getSearchResult(rsClient *redis.Client, searchTerm string) (*SearchResult, 
 		log.Printf("Empty response from cache for key %q: ", searchTerm)
 		return nil, nil
 	}
-	fmt.Printf("Result: %v\n", result)
 	var searchResult SearchResult
 	err = json.Unmarshal([]byte(result), &searchResult)
 	if err != nil {
+		log.Printf("failed to unmarshal response from cache for key %q - %v", searchTerm, err)
 		return nil, err
 	}
+	log.Printf("Successfully fetched results from caceh for search term %q: %v\n", searchTerm, result)
+
 	return &searchResult, nil
 }
