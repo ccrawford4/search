@@ -42,14 +42,16 @@ func main() {
 	var idx Index
 	idx = newDBIndex(connString, false, rsClient)
 	router := gin.Default()
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://127.0.0.1:3000", "http://localhost:3000"},
-		AllowMethods:     []string{"POST", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Add any other required headers here
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	if os.Getenv("ENV") != "production" {
+		router.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{"http://127.0.0.1:3000", "http://localhost:3000"},
+			AllowMethods:     []string{"POST", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Add any other required headers here
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+			MaxAge:           12 * time.Hour,
+		}))
+	}
 
 	router.POST("/search", func(c *gin.Context) {
 		type SearchRequestBody struct {
