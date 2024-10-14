@@ -26,10 +26,6 @@ func calculateTFIDF(termCount, totalWords, docsContainingWord, numDocs float64) 
 // a searchTerm and returns the formated TemplateData response
 func getTemplateData(index *Index, searchTerm string) *TemplateData {
 	searchResults := (*index).search(searchTerm)
-	if !searchResults.Found {
-		return nil
-	}
-
 	var hits Hits
 	docsContainingWord := (float64)(len(searchResults.TermFrequency))
 	numDocs := float64(searchResults.TotalDocsSearched)

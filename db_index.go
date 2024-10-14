@@ -44,7 +44,6 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 		return &SearchResult{
 			frequency,
 			int(totalURLs),
-			false,
 		}
 	}
 
@@ -73,7 +72,6 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 	return &SearchResult{
 		frequency,
 		int(totalURLs),
-		true,
 	}
 }
 
@@ -85,7 +83,6 @@ func (idx *DBIndex) search(word string) *SearchResult {
 		result = idx.fetchFromDB(word)
 	} else {
 		log.Printf("Cache hit for term %q\n", word)
-		result.Found = true
 	}
 	err = insertIntoCache(idx.rsClient, searchTerm, result)
 	if err != nil {
