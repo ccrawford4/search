@@ -1,0 +1,4 @@
+User-agent: *
+Crawl-delay: 0
+Disallow: chap2*
+Disallow: pref*.html

@@ -70,7 +70,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not parse seed url: %v", err)
 	}
-	go crawl(&idx, url)
+	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
+	go crawl(&idx, url, true)
 	err = router.Run(":8080")
 	if err != nil {
 		return

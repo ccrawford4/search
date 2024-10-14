@@ -24,20 +24,51 @@ func parseURL(rawURL string) (*url.URL, error) {
 }
 
 // validUrl returns true if url has not been crawled already and is within the host domain
-func validUrl(index *Index, newUrl, host string) bool {
-	if (*index).containsUrl(newUrl) || !strings.HasPrefix(newUrl, host) {
+
+func validUrl(index *Index, crawlerPolicy *CrawlerPolicy, newUrl, host string) bool {
+	if (*index).containsUrl(newUrl) ||
+		violatesPolicy(crawlerPolicy, newUrl) ||
+		!strings.HasPrefix(strings.ToLower(newUrl), strings.ToLower(host)) {
 		return false
 	}
 	return true
 }
 
-func crawl(index *Index, seedUrl *url.URL) {
+func getPolicy(seedUrl string) *CrawlerPolicy {
+	var crawlerPolicy *CrawlerPolicy
+	var subPath string
+	if strings.HasSuffix(seedUrl, "/") {
+		subPath = "robots.txt"
+	} else {
+		subPath = "/robots.txt"
+	}
+
+	policyPath := seedUrl + subPath
+	policyContent, err := download(policyPath)
+	if err != nil {
+		log.Printf("error downloading robots.txt: %v", err)
+		crawlerPolicy = getDefaultCrawlerPolicy(seedUrl)
+	} else {
+		if crawlerPolicy, err = getCrawlerPolicy(seedUrl, string(policyContent)); err != nil {
+			log.Printf("error parsing robots.txt: %v", err)
+		}
+	}
+	return crawlerPolicy
+}
+
+func crawl(index *Index, seedUrl *url.URL, testCrawl bool) {
 	before := time.Now()
 	initialFullPath, err := clean(seedUrl, seedUrl.Path) // keep track of the initial full path
 	if err != nil {
-		log.Printf("error crawling seedUrl %s: %v", seedUrl, err)
-		return
+		log.Fatalf("Could not clean host url %s: %v", seedUrl, err)
 	}
+	var crawlerPolicy *CrawlerPolicy
+	if testCrawl {
+		crawlerPolicy = getTestCrawlerPolicy(initialFullPath)
+	} else {
+		crawlerPolicy = getPolicy(initialFullPath)
+	}
+
 	queue := []string{seedUrl.Path} // Queue for keeping track of hrefs to visit
 
 	for len(queue) > 0 {
@@ -51,19 +82,29 @@ func crawl(index *Index, seedUrl *url.URL) {
 			log.Printf("error crawling url %s: %v", seedUrl, err)
 			continue
 		}
-		if !validUrl(index, cleanedUrl, initialFullPath) {
+
+		if !validUrl(index, crawlerPolicy, cleanedUrl, initialFullPath) {
 			continue
 		}
 
+		// Sleep to avoid network bans
+		time.Sleep(crawlerPolicy.delay)
+
 		/// Download the contents of the page and add the cleanedURL to the visited set
-		body := download(cleanedUrl)
+		body, err := download(cleanedUrl)
+		if err != nil {
+			log.Printf("Error downloading content for %v: %v", cleanedUrl, err)
+			continue
+		}
+
 		words, hrefs := extract(body)
 		fmt.Printf("Download: url=%s result=ok\n", cleanedUrl)
 
 		// Create the wordFrequency map
 		wordFreq := make(Frequency)
+		stopWords := getStopWords()
 		for _, word := range words {
-			stemmedWord := (*index).getStemmedWord(word)
+			stemmedWord := getStemmedWord(word, stopWords)
 			wordFreq[stemmedWord] += 1
 		}
 

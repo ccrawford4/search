@@ -41,7 +41,7 @@ func TestDownload(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			body := download(ts.URL)
+			body, _ := download(ts.URL)
 			if !reflect.DeepEqual(test.expectedBody, body) {
 				t.Errorf("Expected %s, got %s", test.expectedBody, body)
 			}
