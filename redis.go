@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"log"
 	"time"
@@ -45,6 +46,16 @@ func insertIntoCache(rsClient *redis.Client, searchTerm string, searchResult *Se
 	}
 
 	return nil
+}
+
+func deleteFromCache(rsClient *redis.Client, key string) error {
+	ctx := context.Background()
+	res, err := rsClient.Del(ctx, key).Result()
+	if err != nil {
+		log.Printf("Error deleting romeo: %v\n", err)
+	}
+	fmt.Printf("Number of keys deleted: %v\n", res)
+	return err
 }
 
 func fetchFromCache(rsClient *redis.Client, searchTerm string) (*SearchResult, error) {
