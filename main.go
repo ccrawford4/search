@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// Only load .env file in development environment
-	if os.Getenv("ENV") != "production" {
+	if os.Getenv("ENV") == "development" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatalf("Error loading .env file: %v\n", err)
@@ -42,7 +42,7 @@ func main() {
 	var idx Index
 	idx = newDBIndex(connString, false, rsClient)
 	router := gin.Default()
-	if os.Getenv("ENV") != "production" {
+	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{
 			AllowOrigins:     []string{"http://127.0.0.1:3000", "http://localhost:3000"},
 			AllowMethods:     []string{"POST", "OPTIONS"},

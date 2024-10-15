@@ -115,30 +115,15 @@ func TestTfIdf(t *testing.T) {
 		},
 	}
 
-	var dbIdx Index
-	dbIdx = newDBIndex("test.db", false, nil)
+	var idx Index
+	idx = newMemoryIndex()
 	url, err := parseURL("http://127.0.0.1:8080/documents/top10/")
 	if err != nil {
 		t.Fatalf("Error parsing URL: %v", err.Error())
 	}
-	crawl(&dbIdx, url, true)
-
-	var memIdx Index
-	memIdx = newMemoryIndex()
-	url, err = parseURL("http://127.0.0.1:8080/documents/top10/")
-	if err != nil {
-		t.Fatalf("Error parsing URL: %v", err.Error())
-	}
-	crawl(&memIdx, url, true)
+	crawl(&idx, url, true)
 
 	for _, test := range tests {
-		var idx Index
-		if test.indexType == Memory {
-			idx = memIdx
-		} else {
-			idx = dbIdx
-		}
-
 		t.Run(test.expectedTemplateData.TERM, func(t *testing.T) {
 			got := getTemplateData(&idx, test.expectedTemplateData.TERM)
 			if diff := deep.Equal(*got, test.expectedTemplateData); diff != nil {
