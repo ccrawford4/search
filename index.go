@@ -1,9 +1,8 @@
 package main
 
 type SearchResult struct {
-	TermFrequency     Frequency
-	TotalDocsSearched int
-	Found             bool
+	TermFrequency     Frequency `json:"termFrequency,omitempty"`
+	TotalDocsSearched int       `json:"totalDocsSearched,omitempty"`
 }
 
 type Index interface {

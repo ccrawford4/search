@@ -42,11 +42,10 @@ func (memoryIndex *MemoryIndex) getStemmedWord(word string) string {
 
 func (memoryIndex *MemoryIndex) search(word string) *SearchResult {
 	searchTerm := memoryIndex.getStemmedWord(word)
-	freq, found := memoryIndex.Index[searchTerm]
+	freq, _ := memoryIndex.Index[searchTerm]
 	return &SearchResult{
 		freq,
 		len(memoryIndex.WordCount),
-		found,
 	}
 }
 

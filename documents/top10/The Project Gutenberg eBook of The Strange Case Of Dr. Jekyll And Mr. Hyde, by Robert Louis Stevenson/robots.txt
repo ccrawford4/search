@@ -1,0 +1,7 @@
+User-agent: *
+Crawl-delay: 0
+Disallow: *chap01.html
+Disallow: *chap02.html
+Disallow: *chap03.html
+Disallow: *chap04.html
+Disallow: *chap05.html

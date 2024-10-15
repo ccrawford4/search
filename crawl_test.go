@@ -295,7 +295,7 @@ func TestCrawl(t *testing.T) {
 			if err != nil {
 				log.Fatalf("Error parsing URL: %v\n", err.Error())
 			}
-			crawl(&test.index, svrURL)
+			crawl(&test.index, svrURL, true)
 
 			hostParts := strings.Split(svrURL.Host, ":")
 			mockSVRPort := hostParts[len(hostParts)-1]

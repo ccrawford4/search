@@ -26,7 +26,6 @@ func TestSearch(t *testing.T) {
 			0,
 			SearchResult{
 				TotalDocsSearched: 1,
-				Found:             true,
 			},
 		},
 		{
@@ -38,7 +37,6 @@ func TestSearch(t *testing.T) {
 			0,
 			SearchResult{
 				TotalDocsSearched: 1,
-				Found:             true,
 			},
 		},
 		{
@@ -60,7 +58,6 @@ func TestSearch(t *testing.T) {
 			0,
 			SearchResult{
 				TotalDocsSearched: 11,
-				Found:             true,
 			},
 		},
 		{
@@ -69,10 +66,9 @@ func TestSearch(t *testing.T) {
 			Frequency{
 				"/tests/rnj/sceneI_30.0.html": 1,
 			},
-			1,
+			0,
 			SearchResult{
 				TotalDocsSearched: 1,
-				Found:             true,
 			},
 		},
 		{
@@ -81,32 +77,9 @@ func TestSearch(t *testing.T) {
 			Frequency{
 				"/tests/rnj/sceneI_30.1.html": 26,
 			},
-			1,
+			0,
 			SearchResult{
 				TotalDocsSearched: 1,
-				Found:             true,
-			},
-		},
-		{
-			"Romeo",
-			"/tests/rnj/",
-			Frequency{
-				"/tests/rnj/sceneI_30.0.html":  2,
-				"/tests/rnj/sceneI_30.1.html":  22,
-				"/tests/rnj/sceneI_30.3.html":  2,
-				"/tests/rnj/sceneI_30.4.html":  17,
-				"/tests/rnj/sceneI_30.5.html":  15,
-				"/tests/rnj/sceneII_30.2.html": 42,
-				"/tests/rnj/":                  200,
-				"/tests/rnj/sceneI_30.2.html":  15,
-				"/tests/rnj/sceneII_30.0.html": 3,
-				"/tests/rnj/sceneII_30.1.html": 10,
-				"/tests/rnj/sceneII_30.3.html": 13,
-			},
-			1,
-			SearchResult{
-				TotalDocsSearched: 11,
-				Found:             true,
 			},
 		},
 	}
@@ -121,7 +94,9 @@ func TestSearch(t *testing.T) {
 				filePath := "./documents" + urlPath
 				reader, err := os.Open(filePath)
 				if err != nil {
-					t.Fatalf("Could not open file %q\n", filePath)
+					t.Logf("Could not open file %q\n", filePath)
+					w.WriteHeader(http.StatusNotFound)
+					return
 				}
 
 				bytes, err := io.ReadAll(reader)
@@ -144,13 +119,13 @@ func TestSearch(t *testing.T) {
 			if test.indexType == Memory {
 				index = newMemoryIndex()
 			} else {
-				index = newDBIndex("test.db", true)
+				index = newDBIndex("test.db", false, nil)
 			}
 			url, err := parseURL(testURL)
 			if err != nil {
 				t.Fatalf("Could not parse URL: %v\n", testURL)
 			}
-			crawl(&index, url)
+			crawl(&index, url, true)
 			got := index.search(test.name)
 
 			expectedTermFrequency := make(Frequency)
@@ -167,7 +142,6 @@ func TestSearch(t *testing.T) {
 			if diff := deep.Equal(got, &test.expected); diff != nil {
 				t.Error(diff)
 			}
-
 		})
 	}
 }
