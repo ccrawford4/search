@@ -1,15 +1,25 @@
 package main
 
+import "github.com/emirpasic/gods/sets/hashset"
+
+type UrlEntry struct {
+	TotalWords         int
+	Title, Description string
+}
+
+type UrlMap map[string]UrlEntry
+
 type SearchResult struct {
-	TermFrequency     Frequency `json:"termFrequency,omitempty"`
-	TotalDocsSearched int       `json:"totalDocsSearched,omitempty"`
+	UrlMap            UrlMap
+	TermFrequency     Frequency
+	TotalDocsSearched int
+	Found             bool
 }
 
 type Index interface {
-	isStopWord(word string) bool
+	getStopWords() *hashset.Set
 	containsUrl(url string) bool
 	search(word string) *SearchResult
 	getTotalWords(url string) int
-	getStemmedWord(word string) string
 	insertCrawlResults(c *CrawlResult)
 }

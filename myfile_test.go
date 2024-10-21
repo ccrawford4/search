@@ -16,6 +16,6 @@ func init() {
 	}()
 
 	http.HandleFunc("/documents/top10/", func(w http.ResponseWriter, r *http.Request) {
-		corpusHandler(&w, r)
+		corpusHandler(w, r)
 	})
 }

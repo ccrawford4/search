@@ -266,7 +266,7 @@ func TestExtract(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			words, hrefs := extract(test.text)
+			words, hrefs, _, _ := extract(test.text)
 			if !reflect.DeepEqual(words, test.expectedWords) {
 				t.Errorf("extract words failed got %q, want %q", words, test.expectedWords)
 			}

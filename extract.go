@@ -76,12 +76,49 @@ func sanitizeHTML(n *html.Node) {
 	}
 }
 
+func validTitleNode(n *html.Node, currTitle string) bool {
+	return n.Type == html.ElementNode && n.Data == "title" && currTitle == ""
+}
+
+func containsOGDescription(n *html.Node) bool {
+	for _, attr := range n.Attr {
+		if attr.Key == "property" && attr.Val == "og:description" {
+			return true
+		}
+	}
+	return false
+}
+func containsDescription(n *html.Node) bool {
+	for _, attr := range n.Attr {
+		if attr.Key == "name" && attr.Val == "description" {
+			return true
+		}
+	}
+	return false
+}
+
+func validMetaDescription(n *html.Node, currDescription string) bool {
+	return currDescription == "" && n.Type == html.ElementNode && n.Data == "meta" &&
+		(containsOGDescription(n) || containsDescription(n))
+}
+
+func getDescription(n *html.Node) string {
+	for _, attr := range n.Attr {
+		if attr.Key == "content" {
+			return attr.Val
+		}
+	}
+	return ""
+}
+
 // extract takes in an array of bytes from an HTML page and returns two slices of type string.
 // The first slice returned is the list of words found in the document.
 // The second slice returned is the list of hrefs found in the document.
-func extract(text []byte) ([]string, []string) {
+func extract(text []byte) ([]string, []string, string, string) {
 	var words []string
 	var hrefs []string
+	var title string
+	var description string
 
 	reader := bytes.NewReader(text)
 	doc, err := html.Parse(reader)
@@ -91,8 +128,11 @@ func extract(text []byte) ([]string, []string) {
 
 	var processDocument func(*html.Node)
 	processDocument = func(n *html.Node) {
-		// For text nodes, extract the words from the data
-		if validTextNode(n) {
+		if validMetaDescription(n, description) { // Pull the description from the meta tags
+			description = getDescription(n)
+		} else if validTitleNode(n, title) { // Pull the valid title node
+			title = n.FirstChild.Data
+		} else if validTextNode(n) { // Pull a valid text node
 			words = append(words, getWords(n)...)
 		} else if validAnchorElement(n) {
 			// For anchor elements, try and get the href from the attributes
@@ -111,5 +151,5 @@ func extract(text []byte) ([]string, []string) {
 	sanitizeHTML(doc)
 	processDocument(doc)
 
-	return words, hrefs
+	return words, hrefs, title, description
 }

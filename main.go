@@ -53,6 +53,10 @@ func main() {
 		}))
 	}
 
+	router.GET("/documents/top10/*any", func(c *gin.Context) {
+		corpusHandler(c.Writer, c.Request)
+	})
+
 	router.POST("/search", func(c *gin.Context) {
 		type SearchRequestBody struct {
 			SearchTerm string
@@ -65,17 +69,18 @@ func main() {
 
 		// get the searchTerm from the Request and then search the index for the term
 		result := getTemplateData(&idx, searchRequestBody.SearchTerm)
-		c.IndentedJSON(200, result)
+		if result == nil {
+			c.IndentedJSON(404, gin.H{"error": "No results found"})
+		} else {
+			c.IndentedJSON(200, result)
+		}
 	})
 
-	url, err := parseURL("https://cs272-f24.github.io/top10/")
-	if err != nil {
-		log.Fatalf("Could not parse seed url: %v", err)
-	}
 	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
-	go crawl(&idx, url, true)
+	// go crawl(&idx, "https://usfca.edu/", false)
 	err = router.Run(":8080")
 	if err != nil {
 		return
 	}
+
 }

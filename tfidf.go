@@ -26,15 +26,34 @@ func calculateTFIDF(termCount, totalWords, docsContainingWord, numDocs float64) 
 // a searchTerm and returns the formated TemplateData response
 func getTemplateData(index *Index, searchTerm string) *TemplateData {
 	searchResults := (*index).search(searchTerm)
+	if !searchResults.Found {
+		return nil
+	}
+
 	var hits Hits
 	docsContainingWord := (float64)(len(searchResults.TermFrequency))
 	numDocs := float64(searchResults.TotalDocsSearched)
 
 	// Iterate through the frequency map and populate the hits array
 	for url, count := range searchResults.TermFrequency {
-		totalWords := (float64)((*index).getTotalWords(url))
-		tfidf := calculateTFIDF((float64)(count), totalWords, docsContainingWord, numDocs)
-		hits = append(hits, Hit{url, tfidf})
+		if url == "" {
+			continue
+		}
+
+		// Calculate TFIDF
+		totalWords := searchResults.UrlMap[url].TotalWords
+		tfidf := calculateTFIDF((float64)(count), (float64)(totalWords), docsContainingWord, numDocs)
+
+		// Pull out data from the url map and clean up titles that are not found
+		urlEntry := searchResults.UrlMap[url]
+		title := urlEntry.Title
+
+		if urlEntry.Title == "" {
+			title = url
+		}
+
+		// Update the hits array
+		hits = append(hits, Hit{url, title, urlEntry.Description, tfidf})
 	}
 	// Sort the hits array based on TF-IDF score
 	sort.Sort(hits)
