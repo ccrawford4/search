@@ -29,6 +29,8 @@ func (idx *DBIndex) containsUrl(url string) bool {
 	return result.Error == nil
 }
 
+const batchSize = 1000
+
 func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 	wordObj := Word{Name: searchTerm}
 
@@ -50,30 +52,44 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 		}
 	}
 
-	// Fetch word frequency records associated with the word object
-	var wordFrequencyRecords []WordFrequencyRecord
-	result := idx.db.
-		Where("word_id = ?", wordObj.ID).
-		Preload("Url").
-		Find(&wordFrequencyRecords)
+	// Fetch word frequency records in batches
+	var offset int
+	for {
+		var wordFrequencyRecords []WordFrequencyRecord
+		result := idx.db.
+			Where("word_id = ?", wordObj.ID).
+			Preload("Url").
+			Offset(offset).
+			Limit(batchSize).
+			Find(&wordFrequencyRecords)
 
-	// Handle potential errors during fetching
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			log.Printf("No word frequency records found for word: %v\n", wordObj.Name)
-		} else {
-			log.Printf("Error fetching word frequency records: %v\n", result.Error)
+		// Handle potential errors during fetching
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Printf("No word frequency records found for word: %v\n", wordObj.Name)
+			} else {
+				log.Printf("Error fetching word frequency records: %v\n", result.Error)
+			}
+			break
 		}
-	}
 
-	// Populate frequency map
-	for _, record := range wordFrequencyRecords {
-		urlMap[record.Url.Name] = UrlEntry{
-			record.Url.Count,
-			record.Url.Title,
-			record.Url.Description,
+		// Break the loop if no more records are returned
+		if len(wordFrequencyRecords) == 0 {
+			break
 		}
-		frequency[record.Url.Name] = record.Count
+
+		// Populate frequency map
+		for _, record := range wordFrequencyRecords {
+			urlMap[record.Url.Name] = UrlEntry{
+				record.Url.Count,
+				record.Url.Title,
+				record.Url.Description,
+			}
+			frequency[record.Url.Name] = record.Count
+		}
+
+		// Increment offset for the next batch
+		offset += batchSize
 	}
 
 	// Return search result
