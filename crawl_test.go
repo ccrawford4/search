@@ -17,10 +17,10 @@ func TestCrawl(t *testing.T) {
 	styleDoc := []byte("\n<html>\n<head>\n  <title>Style</title>\n  <style>\n    a.blue {\n      color: blue;\n    }\n    a.red {\n      color: red;\n    }\n  </style>\n<body>\n  <p>\n    Here is a blue link to <a class=\"blue\" href=\"/tests/project01/href.html\">href.html</a>\n  </p>\n  <p>\n    And a red link to <a class=\"red\" href=\"/tests/project01/simple.html\">simple.html</a>\n  </p>\n</body>\n</html>")
 	repeatDoc := []byte("<html><body><a href=\"/repeat-href\"></a><a href=\"/repeat-href\"></a></body></html>")
 
-	simpleWords, _ := extract(simpleDoc)
-	hrefWords, _ := extract(hrefDoc)
+	simpleWords, _, _ := extract(simpleDoc)
+	hrefWords, _, _ := extract(hrefDoc)
 	hrefWords = append(hrefWords, simpleWords...)
-	styleWords, _ := extract(styleDoc)
+	styleWords, _, _ := extract(styleDoc)
 	styleWords = append(styleWords, hrefWords...)
 	stopWords := getStopWords()
 
@@ -43,8 +43,10 @@ func TestCrawl(t *testing.T) {
 			newMemoryIndex(),
 			&MemoryIndex{
 				stopWords,
-				Frequency{
-					"http://127.0.0.1:8080/": 8,
+				UrlMap{
+					"http://127.0.0.1:8080/": UrlEntry{8,
+						"",
+					},
 				},
 				IndexMap{
 					"there": Frequency{
@@ -89,9 +91,15 @@ func TestCrawl(t *testing.T) {
 			newMemoryIndex(),
 			&MemoryIndex{
 				stopWords,
-				Frequency{
-					"http://127.0.0.1:8080/":                            7,
-					"http://127.0.0.1:8080/tests/project01/simple.html": 8,
+				UrlMap{
+					"http://127.0.0.1:8080/": UrlEntry{
+						7,
+						"",
+					},
+					"http://127.0.0.1:8080/tests/project01/simple.html": UrlEntry{
+						8,
+						"",
+					},
 				},
 				IndexMap{
 					"there": Frequency{
@@ -156,10 +164,19 @@ func TestCrawl(t *testing.T) {
 			newMemoryIndex(),
 			&MemoryIndex{
 				stopWords,
-				Frequency{
-					"http://127.0.0.1:8080/":                            16,
-					"http://127.0.0.1:8080/tests/project01/href.html":   7,
-					"http://127.0.0.1:8080/tests/project01/simple.html": 8,
+				UrlMap{
+					"http://127.0.0.1:8080/": UrlEntry{
+						16,
+						"Style",
+					},
+					"http://127.0.0.1:8080/tests/project01/href.html": UrlEntry{
+						7,
+						"",
+					},
+					"http://127.0.0.1:8080/tests/project01/simple.html": UrlEntry{
+						8,
+						"",
+					},
 				},
 				IndexMap{
 					"there": Frequency{
@@ -244,17 +261,23 @@ func TestCrawl(t *testing.T) {
 			},
 			styleWords,
 			map[string][]byte{
-				"/":           repeatDoc,
-				"repeat-href": repeatDoc,
+				"/":            repeatDoc,
+				"/repeat-href": repeatDoc,
 			},
 			2,
 			newMemoryIndex(),
 
 			&MemoryIndex{
 				stopWords,
-				Frequency{
-					"http://127.0.0.1:8080/":            0,
-					"http://127.0.0.1:8080/repeat-href": 0,
+				UrlMap{
+					"http://127.0.0.1:8080/": UrlEntry{
+						0,
+						"",
+					},
+					"http://127.0.0.1:8080/repeat-href": UrlEntry{
+						0,
+						"",
+					},
 				},
 				IndexMap{},
 			},
@@ -272,8 +295,11 @@ func TestCrawl(t *testing.T) {
 			newMemoryIndex(),
 			&MemoryIndex{
 				stopWords,
-				Frequency{
-					"http://127.0.0.1:8080/": 0,
+				UrlMap{
+					"http://127.0.0.1:8080/": UrlEntry{
+						0,
+						"",
+					},
 				},
 				IndexMap{},
 			},
@@ -295,7 +321,7 @@ func TestCrawl(t *testing.T) {
 			if err != nil {
 				log.Fatalf("Error parsing URL: %v\n", err.Error())
 			}
-			crawl(&test.index, svrURL, true)
+			crawl(&test.index, ts.URL, true)
 
 			hostParts := strings.Split(svrURL.Host, ":")
 			mockSVRPort := hostParts[len(hostParts)-1]

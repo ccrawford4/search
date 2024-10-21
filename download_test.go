@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -41,9 +42,22 @@ func TestDownload(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			body, _ := download(ts.URL)
-			if !reflect.DeepEqual(test.expectedBody, body) {
-				t.Errorf("Expected %s, got %s", test.expectedBody, body)
+			var wg sync.WaitGroup
+			downloadChannel := make(chan Download)
+			wg.Add(1)
+			go download(ts.URL, &wg, downloadChannel)
+
+			go func() {
+				wg.Wait()
+				close(downloadChannel)
+			}()
+
+			downloadObj, ok := <-downloadChannel
+			if !ok {
+				t.Errorf("Could not receive download Obj from channel\n")
+			}
+			if !reflect.DeepEqual(test.expectedBody, downloadObj.Body) {
+				t.Errorf("Expected %s, got %s", test.expectedBody, downloadObj.Body)
 			}
 		})
 	}

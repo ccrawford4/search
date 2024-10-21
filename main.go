@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// Only load .env file in development environment
-	if os.Getenv("ENV") == "development" {
+	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatalf("Error loading .env file: %v\n", err)
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	var idx Index
-	idx = newDBIndex(connString, false, rsClient)
+	idx = newDBIndex("dev.db", true, rsClient)
 	router := gin.Default()
 	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{
@@ -52,6 +52,10 @@ func main() {
 			MaxAge:           12 * time.Hour,
 		}))
 	}
+
+	router.GET("/documents/top10/*any", func(c *gin.Context) {
+		corpusHandler(c.Writer, c.Request)
+	})
 
 	router.POST("/search", func(c *gin.Context) {
 		type SearchRequestBody struct {
@@ -65,15 +69,15 @@ func main() {
 
 		// get the searchTerm from the Request and then search the index for the term
 		result := getTemplateData(&idx, searchRequestBody.SearchTerm)
-		c.IndentedJSON(200, result)
+		if result == nil {
+			c.IndentedJSON(504, gin.H{"error": "No results found"})
+		} else {
+			c.IndentedJSON(200, result)
+		}
 	})
 
-	url, err := parseURL("https://cs272-f24.github.io/top10/")
-	if err != nil {
-		log.Fatalf("Could not parse seed url: %v", err)
-	}
 	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
-	go crawl(&idx, url, true)
+	go crawl(&idx, "http://localhost:8080/documents/top10/", true)
 	err = router.Run(":8080")
 	if err != nil {
 		return

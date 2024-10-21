@@ -38,12 +38,15 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 
 	// Initialize frequency map
 	frequency := make(Frequency)
+	urlMap := make(UrlMap)
 
 	// Retrieve the word object from the database
 	if err := getItem(idx.db, &wordObj); err != nil {
 		return &SearchResult{
+			urlMap,
 			frequency,
 			int(totalURLs),
+			false,
 		}
 	}
 
@@ -65,13 +68,19 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 
 	// Populate frequency map
 	for _, record := range wordFrequencyRecords {
+		urlMap[record.Url.Name] = UrlEntry{
+			record.Url.Count,
+			record.Url.Title,
+		}
 		frequency[record.Url.Name] = record.Count
 	}
 
 	// Return search result
 	return &SearchResult{
+		urlMap,
 		frequency,
 		int(totalURLs),
+		true,
 	}
 }
 
@@ -127,6 +136,7 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	url := Url{
 		Name:  c.Url,
 		Count: c.TotalWords,
+		Title: c.Title,
 	}
 	err := getItemOrCreate(idx.db, &url)
 	if err != nil {
@@ -199,4 +209,8 @@ func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, 250); err != nil {
 		log.Printf("Error upserting word frequency records %v", err)
 	}
+}
+
+func (idx *DBIndex) getStopWords() *hashset.Set {
+	return idx.StopWords
 }

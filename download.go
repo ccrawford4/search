@@ -4,15 +4,18 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 )
 
 // download takes in a URL, makes an HTTP GET request and returns the data as an array of bytes
-func download(url string) ([]byte, error) {
+func download(url string, wg *sync.WaitGroup, ch chan Download) {
+	defer wg.Done()
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		ch <- Download{nil, "", err}
+		log.Printf("ERROR Downloading %q: %v\n", url, err)
+		return
 	}
-
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -22,8 +25,12 @@ func download(url string) ([]byte, error) {
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Error reading file: %v\n", err)
+		ch <- Download{nil, "", err}
+		return
 	}
-
-	return bytes, nil
+	ch <- Download{
+		bytes,
+		url,
+		nil,
+	}
 }

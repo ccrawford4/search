@@ -16,6 +16,7 @@ type Word struct {
 type Url struct {
 	gorm.Model
 	Name  string `gorm:"unique"`
+	Title string
 	Count int
 }
 type WordFrequencyRecord struct {
