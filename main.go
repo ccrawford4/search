@@ -77,7 +77,7 @@ func main() {
 	})
 
 	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
-	go crawl(&idx, "https://usfca.edu/", true)
+	// go crawl(&idx, "https://usfca.edu/", false)
 	err = router.Run(":8080")
 	if err != nil {
 		return

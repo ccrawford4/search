@@ -122,7 +122,6 @@ func crawl(index *Index, seedUrl string, testCrawl bool) {
 		for i, cleanedUrl := range cleanedUrls {
 			wg.Add(1)
 			// For usfca.edu crawling
-
 			if testCrawl {
 				time.Sleep(crawlerPolicy.delay + time.Duration(i) + time.Millisecond)
 			} else {
