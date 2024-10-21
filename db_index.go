@@ -71,6 +71,7 @@ func (idx *DBIndex) fetchFromDB(searchTerm string) *SearchResult {
 		urlMap[record.Url.Name] = UrlEntry{
 			record.Url.Count,
 			record.Url.Title,
+			record.Url.Description,
 		}
 		frequency[record.Url.Name] = record.Count
 	}
@@ -134,9 +135,10 @@ func (idx *DBIndex) getStemmedWord(word string) string {
 
 func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	url := Url{
-		Name:  c.Url,
-		Count: c.TotalWords,
-		Title: c.Title,
+		Name:        c.Url,
+		Count:       c.TotalWords,
+		Title:       c.Title,
+		Description: c.Description,
 	}
 	err := getItemOrCreate(idx.db, &url)
 	if err != nil {

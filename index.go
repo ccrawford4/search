@@ -3,8 +3,8 @@ package main
 import "github.com/emirpasic/gods/sets/hashset"
 
 type UrlEntry struct {
-	TotalWords int
-	Title      string
+	TotalWords         int
+	Title, Description string
 }
 
 type UrlMap map[string]UrlEntry

@@ -36,17 +36,24 @@ func getTemplateData(index *Index, searchTerm string) *TemplateData {
 
 	// Iterate through the frequency map and populate the hits array
 	for url, count := range searchResults.TermFrequency {
-		totalWords := searchResults.UrlMap[url].TotalWords
-		tfidf := calculateTFIDF((float64)(count), (float64)(totalWords), docsContainingWord, numDocs)
-		title := searchResults.UrlMap[url].Title
-		if title == "" {
-			title = url
-		}
-		// Ignore empty urls
 		if url == "" {
 			continue
 		}
-		hits = append(hits, Hit{url, title, tfidf})
+
+		// Calculate TFIDF
+		totalWords := searchResults.UrlMap[url].TotalWords
+		tfidf := calculateTFIDF((float64)(count), (float64)(totalWords), docsContainingWord, numDocs)
+
+		// Pull out data from the url map and clean up titles that are not found
+		urlEntry := searchResults.UrlMap[url]
+		title := urlEntry.Title
+
+		if urlEntry.Title == "" {
+			title = url
+		}
+
+		// Update the hits array
+		hits = append(hits, Hit{url, title, urlEntry.Description, tfidf})
 	}
 	// Sort the hits array based on TF-IDF score
 	sort.Sort(hits)

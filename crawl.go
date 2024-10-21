@@ -11,9 +11,9 @@ import (
 )
 
 type CrawlResult struct {
-	TermFrequency Frequency // frequency per word
-	Url, Title    string    // the url crawled
-	TotalWords    int       // the total # of words in the document
+	TermFrequency           Frequency // frequency per word
+	Url, Title, Description string    // the url crawled
+	TotalWords              int       // the total # of words in the document
 }
 
 // parseURL takes in a rawURL or href and returns a new pointer to an url.URL object
@@ -142,7 +142,7 @@ func crawl(index *Index, seedUrl string, testCrawl bool) {
 		var allHrefs []string
 		for downloadObj := range downloadChannel {
 			// Extract content from the downloaded body
-			words, hrefs, title := extract(downloadObj.Body)
+			words, hrefs, title, description := extract(downloadObj.Body)
 			if words == nil && hrefs == nil {
 				log.Printf("Could not parse content from url %q\n", downloadObj.Url)
 				continue
@@ -161,6 +161,7 @@ func crawl(index *Index, seedUrl string, testCrawl bool) {
 				wordFreq,
 				downloadObj.Url,
 				title,
+				description,
 				len(words),
 			})
 		}

@@ -7,8 +7,8 @@ type Frequency map[string]int
 // URL = the URL that a word is pulled from
 // TFIDF = the TF-IDF score (relevancy) of the document for the search
 type Hit struct {
-	URL, TITLE string
-	TFIDF      float64
+	URL, TITLE, DESCRIPTION string
+	TFIDF                   float64
 }
 
 // Hits is an array of Hit objects

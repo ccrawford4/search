@@ -40,7 +40,7 @@ func main() {
 	}
 
 	var idx Index
-	idx = newDBIndex("dev.db", true, rsClient)
+	idx = newDBIndex(connString, false, rsClient)
 	router := gin.Default()
 	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{
@@ -70,16 +70,17 @@ func main() {
 		// get the searchTerm from the Request and then search the index for the term
 		result := getTemplateData(&idx, searchRequestBody.SearchTerm)
 		if result == nil {
-			c.IndentedJSON(504, gin.H{"error": "No results found"})
+			c.IndentedJSON(404, gin.H{"error": "No results found"})
 		} else {
 			c.IndentedJSON(200, result)
 		}
 	})
 
 	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
-	go crawl(&idx, "http://localhost:8080/documents/top10/", true)
+	go crawl(&idx, "https://usfca.edu/", true)
 	err = router.Run(":8080")
 	if err != nil {
 		return
 	}
+
 }

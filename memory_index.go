@@ -44,6 +44,7 @@ func (memoryIndex *MemoryIndex) insertCrawlResults(c *CrawlResult) {
 	memoryIndex.WordCount[c.Url] = UrlEntry{
 		c.TotalWords,
 		c.Title,
+		c.Description,
 	}
 
 	for term, frequency := range c.TermFrequency {
