@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// Only load .env file in development environment
-	if os.Getenv("ENV") == "development" {
+	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatalf("Error loading .env file: %v\n", err)
@@ -40,7 +40,12 @@ func main() {
 	}
 
 	var idx Index
+	// For Production
 	idx = newDBIndex(connString, false, rsClient)
+
+	// for testing
+	// idx = newDBIndex("dev.db", true, nil)
+
 	router := gin.Default()
 	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{
@@ -76,8 +81,8 @@ func main() {
 		}
 	})
 
-	// Use the test crawl flag to avoid parsing robots.txt and delaying overall crawl time
-	// go crawl(&idx, "https://usfca.edu/", false)
+	// For production
+	go crawl(&idx, "https://usfca.edu/", false)
 	err = router.Run(":8080")
 	if err != nil {
 		return
