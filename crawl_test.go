@@ -22,7 +22,6 @@ func TestCrawl(t *testing.T) {
 	hrefWords = append(hrefWords, simpleWords...)
 	styleWords, _, _, _ := extract(styleDoc)
 	styleWords = append(styleWords, hrefWords...)
-	stopWords := getStopWords()
 
 	tests := []struct {
 		name                         string
@@ -42,7 +41,6 @@ func TestCrawl(t *testing.T) {
 			1,
 			newMemoryIndex(),
 			&MemoryIndex{
-				stopWords,
 				UrlMap{
 					"http://127.0.0.1:8080/": UrlEntry{8,
 						"",
@@ -59,7 +57,7 @@ func TestCrawl(t *testing.T) {
 					"no": Frequency{
 						"http://127.0.0.1:8080/": 1,
 					},
-					"links": Frequency{
+					"link": Frequency{
 						"http://127.0.0.1:8080/": 1,
 					},
 					"here": Frequency{
@@ -91,7 +89,6 @@ func TestCrawl(t *testing.T) {
 			2,
 			newMemoryIndex(),
 			&MemoryIndex{
-				stopWords,
 				UrlMap{
 					"http://127.0.0.1:8080/": UrlEntry{
 						7,
@@ -114,7 +111,7 @@ func TestCrawl(t *testing.T) {
 					"no": Frequency{
 						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
 					},
-					"links": Frequency{
+					"link": Frequency{
 						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
 					},
 					"here": Frequency{
@@ -135,10 +132,10 @@ func TestCrawl(t *testing.T) {
 					"see": Frequency{
 						"http://127.0.0.1:8080/": 1,
 					},
-					"simple": Frequency{
+					"simpl": Frequency{
 						"http://127.0.0.1:8080/": 2,
 					},
-					"example": Frequency{
+					"exampl": Frequency{
 						"http://127.0.0.1:8080/": 1,
 					},
 					"for": Frequency{
@@ -166,7 +163,6 @@ func TestCrawl(t *testing.T) {
 			3,
 			newMemoryIndex(),
 			&MemoryIndex{
-				stopWords,
 				UrlMap{
 					"http://127.0.0.1:8080/": UrlEntry{
 						16,
@@ -194,8 +190,9 @@ func TestCrawl(t *testing.T) {
 					"no": Frequency{
 						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
 					},
-					"links": Frequency{
-						"http://127.0.0.1:8080/tests/project01/simple.html": 1,
+					"link": Frequency{
+						"http://127.0.0.1:8080/":                             2,
+						"http://127.0.0.1:56038/tests/project01/simple.html": 1,
 					},
 					"here": Frequency{
 						"http://127.0.0.1:8080/":                            1,
@@ -217,11 +214,11 @@ func TestCrawl(t *testing.T) {
 					"see": Frequency{
 						"http://127.0.0.1:8080/tests/project01/href.html": 1,
 					},
-					"simple": Frequency{
+					"simpl": Frequency{
 						"http://127.0.0.1:8080/":                          1,
 						"http://127.0.0.1:8080/tests/project01/href.html": 2,
 					},
-					"example": Frequency{
+					"exampl": Frequency{
 						"http://127.0.0.1:8080/tests/project01/href.html": 1,
 					},
 					"for": Frequency{
@@ -252,9 +249,6 @@ func TestCrawl(t *testing.T) {
 					"style": Frequency{
 						"http://127.0.0.1:8080/": 1,
 					},
-					"link": Frequency{
-						"http://127.0.0.1:8080/": 2,
-					},
 				},
 			},
 		},
@@ -274,7 +268,6 @@ func TestCrawl(t *testing.T) {
 			newMemoryIndex(),
 
 			&MemoryIndex{
-				stopWords,
 				UrlMap{
 					"http://127.0.0.1:8080/": UrlEntry{
 						0,
@@ -302,7 +295,6 @@ func TestCrawl(t *testing.T) {
 			1,
 			newMemoryIndex(),
 			&MemoryIndex{
-				stopWords,
 				UrlMap{
 					"http://127.0.0.1:8080/": UrlEntry{
 						0,

@@ -11,21 +11,22 @@ import (
 
 type Word struct {
 	gorm.Model
-	Name string `gorm:"unique"`
+	Name string `gorm:"index:word_name_idx,unique"`
 }
 type Url struct {
 	gorm.Model
-	Name               string `gorm:"unique"`
+	Name               string `gorm:"index:url_name_idx,unique"`
 	Title, Description string
 	Count              int
 }
 type WordFrequencyRecord struct {
 	gorm.Model
-	Count  int
-	WordID uint
-	UrlID  uint
-	Word   Word
-	Url    Url
+	Count      int
+	WordID     uint
+	Word       Word
+	UrlID      uint
+	Url        Url
+	IdxWordUrl string `gorm:"index:idx_word_url,unique"`
 }
 
 // migrateTables migrates the Word, Url, and WordFrequencyRecord tables using autoMigrate
@@ -99,21 +100,6 @@ func getItemOrCreate[K *Word | *WordFrequencyRecord | *Url](db *gorm.DB, object 
 		err = create(db, object)
 	}
 	return err
-}
-
-func batchInsertWords(db *gorm.DB, words []*Word, batchSize int) error {
-	for i := 0; i < len(words); i += batchSize {
-		end := i + batchSize
-		if end > len(words) {
-			end = len(words)
-		}
-
-		batch := words[i:end]
-		if err := db.Create(&batch).Error; err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func batchInsertWordFrequencyRecords(db *gorm.DB, wordFrequencyRecords []*WordFrequencyRecord, batchSize int) error {

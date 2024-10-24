@@ -11,7 +11,7 @@ import (
 )
 
 const invalidAgent = "go-http-client/1.1"
-const defaultCrawlDelay = time.Millisecond * 500
+const defaultCrawlDelay = time.Millisecond * 10
 
 type CrawlerPolicy struct {
 	root       string
@@ -44,7 +44,7 @@ func getTestCrawlerPolicy(root string) *CrawlerPolicy {
 	return &CrawlerPolicy{
 		root,
 		nil,
-		0,
+		defaultCrawlDelay,
 	}
 }
 
