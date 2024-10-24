@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"log"
 )
 
@@ -141,68 +141,109 @@ func cantorPairing(wordID, urlID uint) uint {
 func (idx *DBIndex) insertCrawlResults(c *CrawlResult) {
 	url := Url{
 		Name:        c.Url,
+		Count:       c.TotalWords,
 		Title:       c.Title,
 		Description: c.Description,
-		Count:       c.TotalWords,
 	}
 	err := getItemOrCreate(idx.db, &url)
 	if err != nil {
 		log.Printf("Error fetching or Creating URL %v: %v\n", url, err)
+		return
 	}
 
-	var words []*Word
-	var termCounts []int
-
-	terms := make([]string, 0, len(c.TermFrequency))
-	for term, frequency := range c.TermFrequency {
-		terms = append(terms, term)
-		termCounts = append(termCounts, frequency)
+	// Extract all the names from the termFrequency
+	names := make([]string, 0, len(c.TermFrequency))
+	for word := range c.TermFrequency {
+		if word == "the" {
+			fmt.Printf("found the!: %v\n", word)
+		}
+		names = append(names, word)
 	}
 
-	// Create Word objects
-	for _, term := range terms {
-		words = append(words, &Word{Name: term})
-	}
-
-	// Batch Create of Words with OnConflict handling
-	idx.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}},
-		DoNothing: true,
-	}).Create(&words)
-
-	// Retrieve all existing words to ensure we have correct references
-	var existingWords []Word
-	idx.db.Where("name IN ?", terms).Find(&existingWords)
-
-	// Replace the original words slice with the existing ones from the database
-	words = make([]*Word, len(existingWords))
-	for i, w := range existingWords {
-		words[i] = &w
-	}
-
-	var wordFrequencyRecords []*WordFrequencyRecord
-
-	// Create a map to associate terms with their corresponding existing words
-	wordMap := make(map[string]*Word)
-	for _, w := range existingWords {
-		wordMap[w.Name] = &w
-	}
-
-	// Populate the WordFrequencyRecord
-	for term, frequency := range c.TermFrequency {
-		if word, found := wordMap[term]; found {
-			wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
-				Url:        url,
-				Word:       *word,
-				WordID:     word.ID,
-				UrlID:      url.ID,
-				Count:      frequency,
-				IdxWordUrl: fmt.Sprintf("%d", cantorPairing(word.ID, url.ID)),
-			})
+	for _, word := range names {
+		if word == "the" {
+			fmt.Printf("found the: %v\n", word)
 		}
 	}
 
-	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, 250); err != nil {
-		log.Printf("[WARNING] Could Not Insert Word Frequency Records: %v", err)
+	// Identify all the ones that have the matching name in the db
+	var existingWords []*Word
+	idx.db.Model(&Word{}).Select("name", "id").Where("name IN ?", names).Find(&existingWords)
+
+	for _, word := range existingWords {
+		if word.Name == "the" {
+			fmt.Printf("Found the!: %v\n", word)
+		}
 	}
+
+	// Now keep track of all the names that are already in the database
+	seenNames := hashset.New()
+	for _, word := range existingWords {
+		seenNames.Add(word.Name)
+	}
+
+	// Finally go through the names again and if they are not in the database then create them
+	var newWords []*Word
+	for word := range c.TermFrequency {
+		if !seenNames.Contains(word) {
+			newWords = append(newWords, &Word{Name: word})
+		}
+	}
+	// Set the desired batch size
+	if err := batchInsertWords(idx.db, newWords, 500); err != nil {
+		log.Printf("Error inserting words: %v", err)
+		return
+	}
+
+	var allWords []*Word
+	allWords = append(newWords, existingWords...)
+
+	// Now create the word frequency records array
+	var wordFrequencyRecords []*WordFrequencyRecord
+	for _, word := range allWords {
+		if word.Name == "the" {
+			fmt.Printf("found the!: %v\n", word)
+		}
+		wordFrequencyRecords = append(wordFrequencyRecords, &WordFrequencyRecord{
+			Url:        url,
+			Word:       *word,
+			WordID:     word.ID,
+			UrlID:      url.ID,
+			Count:      c.TermFrequency[word.Name],
+			IdxWordUrl: fmt.Sprintf("%d", cantorPairing(word.ID, url.ID)),
+		})
+	}
+
+	if err = batchInsertWordFrequencyRecords(idx.db, wordFrequencyRecords, 250); err != nil {
+		log.Printf("Error upserting word frequency records %v", err)
+	}
+}
+
+func (idx *DBIndex) updateUserTable(word, email string) error {
+	user := User{
+		Email: email,
+	}
+	err := getItemOrCreate(idx.db, &user)
+	if err != nil {
+		log.Printf("[ERROR] Could Not Fetch User: %v\n", user)
+		// TODO: Incorporate usage for cache here
+	}
+
+	stemmedWord, err := getStemmedWord(word)
+	if err != nil {
+		log.Printf("[ERROR] Could Not Get Stemmed Word: %v\n", err)
+		return err
+	}
+
+	wordObj := Word{
+		Name: stemmedWord,
+	}
+
+	err = getItem(idx.db, &wordObj)
+	if err != nil {
+		log.Printf("[ERROR] Could Not Fetch Word: %v\n", err)
+		return err
+	}
+
+	return nil
 }

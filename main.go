@@ -1,13 +1,9 @@
 package main
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
-	"net/http"
 	"os"
-	"time"
 )
 
 func init() {
@@ -45,46 +41,8 @@ func main() {
 
 	// for testing
 	// idx = newDBIndex("dev.db", true, nil)
-	router := gin.Default()
-	if os.Getenv("ENV") == "development" {
-		router.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"http://127.0.0.1:3000", "http://localhost:3000"},
-			AllowMethods:     []string{"POST", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Add any other required headers here
-			ExposeHeaders:    []string{"Content-Length"},
-			AllowCredentials: true,
-			MaxAge:           12 * time.Hour,
-		}))
-	}
-
-	router.GET("/documents/top10/*any", func(c *gin.Context) {
-		corpusHandler(c.Writer, c.Request)
-	})
-
-	router.POST("/search", func(c *gin.Context) {
-		type SearchRequestBody struct {
-			SearchTerm string
-		}
-
-		var searchRequestBody SearchRequestBody
-		if err := c.BindJSON(&searchRequestBody); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-
-		// get the searchTerm from the Request and then search the index for the term
-		result := getTemplateData(&idx, searchRequestBody.SearchTerm)
-		if result == nil {
-			c.IndentedJSON(404, gin.H{"error": "No results found"})
-		} else {
-			c.IndentedJSON(200, result)
-		}
-	})
+	go startServer(&idx)
 
 	// For production
-	// go crawl(&idx, "https://usfca.edu/", false)
-	err = router.Run(":8080")
-	if err != nil {
-		return
-	}
-
+	go crawl(&idx, "https://usfca.edu/", false)
 }

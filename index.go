@@ -19,4 +19,5 @@ type Index interface {
 	search(word string) *SearchResult
 	getTotalWords(url string) int
 	insertCrawlResults(c *CrawlResult)
+	updateUserTable(word, email string) error
 }
