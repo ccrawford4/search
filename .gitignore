@@ -31,4 +31,4 @@ go.work.sum
 *.xml
 *.iml
 
-.idea/*
+.idea
