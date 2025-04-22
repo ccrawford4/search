@@ -22,9 +22,8 @@ jobs:
         uses: webiny/action-conventional-commits@v1.3.0
 
   test:
-    name: Test
-    uses: ./test.yml
     needs: check
+    uses: ./test.yml
 
   release:
     needs: test
