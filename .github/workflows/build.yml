@@ -39,10 +39,9 @@ jobs:
           export AWS_ACCOUNT=${{ env.AWS_ACCOUNT }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2.1.0
+        uses: aws-actions/configure-aws-credentials@master
         with:
-          role-to-assume: ${{ secrets.ACTIONS_ROLE }}
-          # role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-actions-role
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-actions-role
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
