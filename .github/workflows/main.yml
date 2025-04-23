@@ -6,8 +6,8 @@ on:
       - main
 
 permissions:
-  packages: write
-  contents: write
+  id-token: write
+  contents: read
 
 jobs:
   check:
