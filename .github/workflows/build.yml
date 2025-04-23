@@ -16,6 +16,10 @@ on:
       AWS_ACCOUNT:
         required: true
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build:
     env:
