@@ -25,8 +25,7 @@ jobs:
     env:
       ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
       ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-      COMMIT_SHA: ${{ inputs.commit-sha }}
-      ENVIRONMENT: ${{ inputs.environment}}
+      TAG: ${{ inputs.tag }}
       AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
     name: Build Docker Image and Push to ECR
     runs-on: ubuntu-latest
@@ -59,11 +58,11 @@ jobs:
           echo "Done building image"
 
           # Tag the image locally
-          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$COMMIT_SHA
+          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$TAG
           docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
           echo "Done tagging image"
 
           # Push the images to ECR
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$COMMIT_SHA
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
           echo "Done Pushing images"
