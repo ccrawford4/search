@@ -1,3 +1,14 @@
+# [1.3.0](https://github.com/ccrawford4/search/compare/v1.2.0...v1.3.0) (2025-04-23)
+
+
+### Features
+
+* **ci:** fixed account name ([40c652b](https://github.com/ccrawford4/search/commit/40c652b9239d5f51c39a7122a6a74fd4a339ba9d))
+* **ci:** try again ([c169fa0](https://github.com/ccrawford4/search/commit/c169fa0ca18b69d1db55b7cd635c2ba7ddf74d9f))
+* **ci:** update secret ([a46f879](https://github.com/ccrawford4/search/commit/a46f8790fbdace95c31afc607153672868ef813a))
+* **ci:** update tag ([612632a](https://github.com/ccrawford4/search/commit/612632a0a5cd9c5d75a78a9a1500a8d4dfa3110e))
+* **ci:** update workflow ([2434d64](https://github.com/ccrawford4/search/commit/2434d64b5a4574360e53bf82140cdd8e94278057))
+
 # [1.2.0](https://github.com/ccrawford4/search/compare/v1.1.0...v1.2.0) (2025-04-23)
 
 
