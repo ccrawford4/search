@@ -44,7 +44,7 @@ jobs:
 
   build:
     needs: release
-    uses: ./.github/workflows/main.yml
+    uses: ./.github/workflows/build.yml
     with:
       tag: ${{ needs.release.new_release_version }}
     secrets:
