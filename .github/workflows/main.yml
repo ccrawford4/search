@@ -1,4 +1,4 @@
-name: Test and Semantic Release
+name: Build and Push to ECR
 
 on:
   push:
@@ -41,3 +41,14 @@ jobs:
         uses: cycjimmy/semantic-release-action@v4.1.1
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  build:
+    needs: release
+    uses: ./.github/workflows/main.yml
+    with:
+      tag: ${{ needs.release.new_release_version }}
+    secrets:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT_TOOLS }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}

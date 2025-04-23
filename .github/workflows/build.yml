@@ -1,0 +1,68 @@
+name: Build and Push to ECR
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+    secrets:
+      AWS_REGION:
+        required: true
+      ECR_REGISTRY:
+        required: true
+      ECR_REPOSITORY:
+        required: true
+      AWS_ACCOUNT:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  build:
+    env:
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+      COMMIT_SHA: ${{ inputs.commit-sha }}
+      ENVIRONMENT: ${{ inputs.environment}}
+      AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+    name: Build Docker Image and Push to ECR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Export AWS_Account
+        run: |
+          export AWS_ACCOUNT=${{ env.AWS_ACCOUNT }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-actions-role
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image and Push to ECR
+        run: |
+          # Build the image
+          echo $ECR_REPOSITORY
+          docker buildx build --platform linux/arm64 -t $ECR_REPOSITORY --load .
+          echo "Done building image"
+
+          # Tag the image locally
+          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$COMMIT_SHA
+          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          echo "Done tagging image"
+
+          # Push the images to ECR
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$COMMIT_SHA
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          echo "Done Pushing images"
