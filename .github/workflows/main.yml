@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
   build:
-    # needs: release
+    needs: release
     uses: ./.github/workflows/build.yml
     with:
       tag: ${{ needs.release.new_release_version }}
