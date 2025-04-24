@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/ccrawford4/search/compare/v1.4.0...v1.5.0) (2025-04-24)
+
+
+### Features
+
+* **ci:** update workflow ([b7c2984](https://github.com/ccrawford4/search/commit/b7c298481bde528ea8cc256214aab03ab577be4b))
+
 # [1.4.0](https://github.com/ccrawford4/search/compare/v1.3.0...v1.4.0) (2025-04-24)
 
 
