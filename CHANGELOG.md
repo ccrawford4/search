@@ -1,3 +1,13 @@
+# [1.4.0](https://github.com/ccrawford4/search/compare/v1.3.0...v1.4.0) (2025-04-24)
+
+
+### Features
+
+* **ci:** update workflow ([8890e5d](https://github.com/ccrawford4/search/commit/8890e5d5f0cb5c4db2cfd527e1aabffd8316937e))
+* **ci:** update workflow ([646aa2d](https://github.com/ccrawford4/search/commit/646aa2d9c86ec402ea8505d1c49986f13b59d5f6))
+* **db:** bring back test db for unit testing ([41ee7e4](https://github.com/ccrawford4/search/commit/41ee7e4b34a26c14d3f768790d4af8eeb888a97d))
+* **db:** using mysql instead ([27acf4b](https://github.com/ccrawford4/search/commit/27acf4b8335cae829464406d8989dc25e70cee31))
+
 # [1.3.0](https://github.com/ccrawford4/search/compare/v1.2.0...v1.3.0) (2025-04-23)
 
 
