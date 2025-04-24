@@ -3,10 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
 )
 
 type DBIndex struct {
@@ -125,8 +126,8 @@ func (idx *DBIndex) getTotalWords(url string) int {
 	return urlObj.Count
 }
 
-func newDBIndex(connString string, useSqlite bool, rsClient *redis.Client) *DBIndex {
-	db, err := connectToDB(connString, useSqlite)
+func newDBIndex(connString string, rsClient *redis.Client) *DBIndex {
+	db, err := connectToDB(connString)
 	if err != nil {
 		log.Fatalf("Error connecting to DB: %v\n", err)
 	}

@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
+	//	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"log"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 const keyPrefix = "term:"
@@ -16,9 +17,10 @@ func getRSClient(redisHost, redisPassword string) (*redis.Client, error) {
 	op := &redis.Options{
 		Addr:     redisHost,
 		Password: redisPassword,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12},
-		WriteTimeout: 5 * time.Second}
+		// TLSConfig: &tls.Config{
+		// 	MinVersion: tls.VersionTLS12},
+		WriteTimeout: 5 * time.Second,
+	}
 	client := redis.NewClient(op)
 	ctx := context.Background()
 
