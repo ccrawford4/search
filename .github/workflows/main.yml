@@ -44,6 +44,7 @@ jobs:
 
   build:
     needs: release
+    if: needs.release.outputs.new_release_version != ''
     uses: ./.github/workflows/build.yml
     with:
       tag: ${{ needs.release.outputs.new_release_version }}
