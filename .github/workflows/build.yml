@@ -53,16 +53,15 @@ jobs:
       - name: Build Docker Image and Push to ECR
         run: |
           # Build the image
-          echo $ECR_REPOSITORY
-          docker buildx build --platform linux/arm64 -t $ECR_REPOSITORY --load .
+          docker build -t $ECR_REPOSITORY --load .
           echo "Done building image"
 
           # Tag the image locally
-          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$TAG
-          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "Done tagging image"
 
           # Push the images to ECR
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-$TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENVIRONMENT-latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "Done Pushing images"
