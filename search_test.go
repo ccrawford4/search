@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/go-test/deep"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/go-test/deep"
 )
 
 func TestSearch(t *testing.T) {

@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/go-test/deep"
 	"testing"
+
+	"github.com/go-test/deep"
 )
 
 func TestTfIdf(t *testing.T) {
@@ -77,7 +78,8 @@ func TestTfIdf(t *testing.T) {
 				"turtle",
 			},
 			0,
-		}, {
+		},
+		{
 			TemplateData{
 				Hits{
 					{

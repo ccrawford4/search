@@ -40,7 +40,7 @@ func main() {
 		log.Fatalf("Error getting Redis Client: %v\n", err)
 	}
 
-	var idx Index = newDBIndex(dsn, rsClient)
+	var idx Index = newDBIndex(dsn, false, rsClient)
 	router := gin.Default()
 	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{

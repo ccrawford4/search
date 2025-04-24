@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +48,12 @@ func dropDatabase(dbName string) {
 
 // connectToDB connects to a mysql DB given its name, migrates the tables, and then
 // returns a pointer to the gorm.DB struct
-func connectToDB(dsn string) (*gorm.DB, error) {
+func connectToDB(dsn string, useSqlite bool) (*gorm.DB, error) {
+	if useSqlite {
+		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+		migrateTables(db)
+		return db, err
+	}
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN: dsn,
 	}), &gorm.Config{})

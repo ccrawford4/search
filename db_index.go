@@ -126,8 +126,8 @@ func (idx *DBIndex) getTotalWords(url string) int {
 	return urlObj.Count
 }
 
-func newDBIndex(connString string, rsClient *redis.Client) *DBIndex {
-	db, err := connectToDB(connString)
+func newDBIndex(connString string, useSqlite bool, rsClient *redis.Client) *DBIndex {
+	db, err := connectToDB(connString, useSqlite)
 	if err != nil {
 		log.Fatalf("Error connecting to DB: %v\n", err)
 	}
