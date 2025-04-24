@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gorm"
 	"log"
 	"os"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 type Word struct {
@@ -45,31 +45,17 @@ func dropDatabase(dbName string) {
 	log.Println("Database dropped and will be recreated.")
 }
 
-// connectToDB connects to a sqlite DB given its name, migrates the tables, and then
+// connectToDB connects to a mysql DB given its name, migrates the tables, and then
 // returns a pointer to the gorm.DB struct
-func connectToDB(connString string, useSqlite bool) (*gorm.DB, error) {
-	if useSqlite {
-		db, err := gorm.Open(sqlite.Open(connString), &gorm.Config{})
-		migrateTables(db)
-		return db, err
-	}
-	db, err := gorm.Open(sqlserver.Open(connString), &gorm.Config{})
+func connectToDB(dsn string) (*gorm.DB, error) {
+	db, err := gorm.Open(mysql.New(mysql.Config{
+		DSN: dsn,
+	}), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Error connecting to the database: ", err)
+		fmt.Errorf("[ERROR] Could not connect to the database: %s", err)
+		return nil, err
 	}
-
-	// Check the connection
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatal("Error getting SQL DB from GORM: ", err)
-	}
-
-	err = sqlDB.Ping()
-	if err != nil {
-		log.Fatal("Error pinging the database: ", err)
-	}
-
-	fmt.Println("Connected to the database using GORM!")
+	fmt.Println("[INFO] Successfully connected to the database!")
 	migrateTables(db)
 	return db, err
 }

@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func init() {
@@ -21,11 +22,11 @@ func init() {
 }
 
 func main() {
-	connString, exists := os.LookupEnv("AZURE_SQL_CONNECTIONSTRING")
+	dsn, exists := os.LookupEnv("DSN")
 	if !exists {
-		log.Fatalf("No Connection AZURE_SQL_CONNECTIONSTRING Provided\n")
+		log.Fatalf("No DSN Provided\n")
 	}
-	log.Printf("Connecting string loaded successfully: %v\n", connString)
+	log.Printf("DSN loaded successfully.")
 	redisHost, exists := os.LookupEnv("REDIS_HOST")
 	if !exists {
 		log.Fatalf("No Redis Host Provided\n")
@@ -39,12 +40,7 @@ func main() {
 		log.Fatalf("Error getting Redis Client: %v\n", err)
 	}
 
-	var idx Index
-	// For Production
-	idx = newDBIndex(connString, false, rsClient)
-
-	// for testing
-	// idx = newDBIndex("dev.db", true, nil)
+	var idx Index = newDBIndex(dsn, rsClient)
 	router := gin.Default()
 	if os.Getenv("ENV") == "development" {
 		router.Use(cors.New(cors.Config{
@@ -86,5 +82,4 @@ func main() {
 	if err != nil {
 		return
 	}
-
 }
