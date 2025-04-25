@@ -76,8 +76,10 @@ func main() {
 		}
 	})
 
-	// For production
-	// go crawl(&idx, "https://usfca.edu/", false)
+	router.POST("/crawl", func(c *gin.Context) {
+		go crawl(&idx, "https://usfca.edu/", false)
+	})
+
 	err = router.Run(":8080")
 	if err != nil {
 		return
