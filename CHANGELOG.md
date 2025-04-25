@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/ccrawford4/search/compare/v1.6.0...v1.7.0) (2025-04-25)
+
+
+### Features
+
+* **ci:** post crawl ([f35a27f](https://github.com/ccrawford4/search/commit/f35a27f578ff279f255ac954a7b5fe15f061ae7c))
+
 # [1.6.0](https://github.com/ccrawford4/search/compare/v1.5.0...v1.6.0) (2025-04-24)
 
 
