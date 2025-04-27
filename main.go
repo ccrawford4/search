@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -82,13 +83,13 @@ func main() {
 		}
 
 		var crawlRequestBody CrawlRequestBody
-		if err := c.BindJSON(crawlRequestBody); err != nil {
+		if err := c.BindJSON(&crawlRequestBody); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
-
+		fmt.Printf("Crawling host: %s\n", crawlRequestBody.Host)
 		go crawl(&idx, crawlRequestBody.Host, false)
 
-		c.IndentedJSON(100, gin.H{"success": "true", "host": crawlRequestBody.Host})
+		c.IndentedJSON(200, gin.H{"success": "true", "host": crawlRequestBody.Host})
 	})
 
 	err = router.Run(":8080")
