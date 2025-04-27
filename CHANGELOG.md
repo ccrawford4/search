@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/ccrawford4/search/compare/v1.7.0...v1.8.0) (2025-04-27)
+
+
+### Features
+
+* **gin:** updated crawl endpoint to take in host ([4214377](https://github.com/ccrawford4/search/commit/4214377196c505c0fe17f6640f366e986721f8b1))
+
 # [1.7.0](https://github.com/ccrawford4/search/compare/v1.6.0...v1.7.0) (2025-04-25)
 
 
