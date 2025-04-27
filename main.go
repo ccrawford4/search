@@ -77,7 +77,18 @@ func main() {
 	})
 
 	router.POST("/crawl", func(c *gin.Context) {
-		go crawl(&idx, "https://usfca.edu/", false)
+		type CrawlRequestBody struct {
+			Host string
+		}
+
+		var crawlRequestBody CrawlRequestBody
+		if err := c.BindJSON(crawlRequestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		go crawl(&idx, crawlRequestBody.Host, false)
+
+		c.IndentedJSON(100, gin.H{"success": "true", "host": crawlRequestBody.Host})
 	})
 
 	err = router.Run(":8080")
