@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/ccrawford4/search/compare/v1.9.0...v1.10.0) (2025-05-04)
+
+
+### Features
+
+* **logging:** updated logs ([a5bc4bb](https://github.com/ccrawford4/search/commit/a5bc4bb6919458897b1a33f85446dd3d363d007c))
+
 # [1.9.0](https://github.com/ccrawford4/search/compare/v1.8.0...v1.9.0) (2025-04-27)
 
 
