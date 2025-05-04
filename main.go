@@ -27,7 +27,7 @@ func main() {
 	if !exists {
 		log.Fatalf("No DSN Provided\n")
 	}
-	log.Printf("DSN loaded successfully.")
+	log.Printf("DSN %s loaded successfully.", dsn)
 	redisHost, exists := os.LookupEnv("REDIS_HOST")
 	if !exists {
 		log.Fatalf("No Redis Host Provided\n")
