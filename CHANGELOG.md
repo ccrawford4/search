@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/ccrawford4/search/compare/v1.8.0...v1.9.0) (2025-04-27)
+
+
+### Features
+
+* **gin:** fixed dsn ([466e8ae](https://github.com/ccrawford4/search/commit/466e8ae28185742b737c914269f87f6dc6f0cc10))
+
 # [1.8.0](https://github.com/ccrawford4/search/compare/v1.7.0...v1.8.0) (2025-04-27)
 
 
