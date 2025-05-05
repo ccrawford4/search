@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/ccrawford4/search/compare/v1.10.0...v1.10.1) (2025-05-05)
+
+
+### Bug Fixes
+
+* updated logs ([c909c9d](https://github.com/ccrawford4/search/commit/c909c9dc70428accd1b327295082e9e6c434e6a8))
+
 # [1.10.0](https://github.com/ccrawford4/search/compare/v1.9.0...v1.10.0) (2025-05-04)
 
 
