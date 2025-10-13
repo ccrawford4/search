@@ -48,7 +48,8 @@ go mod download
 
 ## Configuration
 
-Create a `.env` file in the project root (use `.example.env` as a template):
+Create a `.env` file in the project root:
+`cp .example.env .env`
 
 ```env
 DSN=<database-connection-string>
@@ -83,6 +84,14 @@ ENV=development go run .
 The server will start on `http://localhost:8080`
 
 ### Docker Deployment
+
+#### Option 1: Using Docker Compose (Recommended)
+
+```bash
+docker compose up
+```
+
+#### Option 2: Manual Docker Setup
 
 1. Build the Docker image:
 ```bash
