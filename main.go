@@ -58,6 +58,10 @@ func main() {
 		corpusHandler(c.Writer, c.Request)
 	})
 
+	router.GET("/health", func(c *gin.Context) {
+		c.IndentedJSON(200, gin.H{"status": "ok"})
+	})
+
 	router.POST("/search", func(c *gin.Context) {
 		type SearchRequestBody struct {
 			SearchTerm string
