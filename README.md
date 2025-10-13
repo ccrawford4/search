@@ -52,26 +52,28 @@ Create a `.env` file in the project root:
 `cp .example.env .env`
 
 ```env
-DSN=<database-connection-string>
+MYSQL_USERNAME=<mysql-username>
+MYSQL_PASSWORD=<mysql-password>
+MYSQL_HOST=<mysql-host:port>
+MYSQL_DATABASE=<database-name>
 REDIS_HOST=<redis-host:port>
 REDIS_PASSWORD=<redis-password>
 ENV=development
 ```
 
-### Database Connection Strings
-
-- **SQLite**: `file:search.db?cache=shared&mode=rwc`
-- **MySQL**: `user:password@tcp(host:3306)/database?charset=utf8mb4&parseTime=True&loc=Local`
-- **SQL Server**: `sqlserver://username:password@host:1433?database=dbname`
-
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DSN` | Database connection string | Yes |
-| `REDIS_HOST` | Redis server host and port | Yes |
-| `REDIS_PASSWORD` | Redis authentication password | Yes |
-| `ENV` | Environment mode (development/production) | No |
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `MYSQL_USERNAME` | MySQL username | Yes | - |
+| `MYSQL_PASSWORD` | MySQL password | Yes | - |
+| `MYSQL_HOST` | MySQL host and port | No | localhost:3306 |
+| `MYSQL_DATABASE` | MySQL database name | Yes | - |
+| `REDIS_HOST` | Redis server host and port | Yes | - |
+| `REDIS_PASSWORD` | Redis authentication password | Yes | - |
+| `ENV` | Environment mode (development/production) | No | - |
+
+**Note**: The application automatically constructs the MySQL DSN from the provided credentials in the format: `username:password@tcp(host:port)/database?charset=utf8mb4&parseTime=True&loc=Local`
 
 ## Running the Application
 
@@ -101,7 +103,10 @@ docker build -t search-engine .
 2. Run the container:
 ```bash
 docker run -p 8080:8080 \
-  -e DSN="your-database-dsn" \
+  -e MYSQL_USERNAME="your-mysql-username" \
+  -e MYSQL_PASSWORD="your-mysql-password" \
+  -e MYSQL_HOST="mysql:3306" \
+  -e MYSQL_DATABASE="your-database-name" \
   -e REDIS_HOST="redis:6379" \
   -e REDIS_PASSWORD="your-redis-password" \
   search-engine

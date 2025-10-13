@@ -23,11 +23,29 @@ func init() {
 }
 
 func main() {
-	dsn, exists := os.LookupEnv("DSN")
+	// Get MySQL credentials from environment
+	mysqlUser, exists := os.LookupEnv("MYSQL_USERNAME")
 	if !exists {
-		log.Fatalf("No DSN Provided\n")
+		log.Fatalf("No MYSQL_USERNAME Provided\n")
 	}
-	log.Printf("DSN %s loaded successfully!!", dsn)
+	mysqlPassword, exists := os.LookupEnv("MYSQL_PASSWORD")
+	if !exists {
+		log.Fatalf("No MYSQL_PASSWORD Provided\n")
+	}
+	mysqlHost, exists := os.LookupEnv("MYSQL_HOST")
+	if !exists {
+		mysqlHost = "localhost:3306"
+		log.Printf("No MYSQL_HOST provided, using default: %s\n", mysqlHost)
+	}
+	mysqlDatabase, exists := os.LookupEnv("MYSQL_DATABASE")
+	if !exists {
+		log.Fatalf("No MYSQL_DATABASE Provided\n")
+	}
+
+	// Construct DSN from credentials
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		mysqlUser, mysqlPassword, mysqlHost, mysqlDatabase)
+	log.Printf("Database connection configured for host: %s, database: %s\n", mysqlHost, mysqlDatabase)
 	redisHost, exists := os.LookupEnv("REDIS_HOST")
 	if !exists {
 		log.Fatalf("No Redis Host Provided\n")

@@ -28,7 +28,10 @@ services:
     build: .
     container_name: search_api_container
     environment:
-      DSN: "example_user:example_password@tcp(mysql:3306)/example_db?charset=utf8mb4&parseTime=True&loc=Local"
+      MYSQL_USERNAME: example_user
+      MYSQL_PASSWORD: example_password
+      MYSQL_HOST: mysql:3306
+      MYSQL_DATABASE: example_db
       REDIS_HOST: redis:6379
       REDIS_PASSWORD: ""
     ports:
